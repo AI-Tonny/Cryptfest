@@ -1,0 +1,6 @@
+@Cryptfest_HostAddress = http://localhost:5174
+
+GET {{Cryptfest_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

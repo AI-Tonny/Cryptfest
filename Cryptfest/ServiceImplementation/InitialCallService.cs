@@ -8,7 +8,7 @@ using System.Collections.Concurrent;
 using System.Net.Http;
 using System.Text.Json;
 
-namespace Cryptfest.ServiceImpementation;
+namespace Cryptfest.ServiceImplementation;
 
 public class InitialCallService : IInitialCallService
 {

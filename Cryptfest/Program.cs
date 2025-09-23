@@ -1,7 +1,11 @@
 using API.Data;
 using API.Interfaces.Services.Crypto;
+using Cryptfest.Interfaces.Repositories;
 using Cryptfest.Interfaces.Services.InitialCall;
+using Cryptfest.Interfaces.Services.User;
+using Cryptfest.Repositories;
 using Cryptfest.ServiceImpementation;
+using Cryptfest.ServiceImplementation;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,8 +19,10 @@ builder.Services.AddDbContext<ApplicationContext>(context =>
 
 builder.Services.AddAutoMapper(conf => { }, typeof(Program));
 
+builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ICryptoService, CryptoService>();
 builder.Services.AddScoped<IInitialCallService, InitialCallService>();
+builder.Services.AddScoped<ICryptoAssetRopository, CryptoAssetRepository>();
 
 
 builder.Services.AddControllers();
@@ -32,16 +38,16 @@ using (var scope = app.Services.CreateScope())
 {
     // Create db
     var context = scope.ServiceProvider.GetRequiredService<ApplicationContext>();
-    await context.Database.EnsureDeletedAsync();
+    //await context.Database.EnsureDeletedAsync();
     await context.Database.EnsureCreatedAsync();
     
     // Take crypto assets from api and save in db
     var initialCall = scope.ServiceProvider.GetRequiredService<IInitialCallService>();
-    //bool init = await initialCall.SaveAssetsInDbFromApi();                                         // ============> this may be an error
-    //if (init is false) { throw new InvalidOperationException(); } 
+    bool init = await initialCall.SaveAssetsInDbFromApi();                                         // ============> this may be an error
+    if (init is false) { throw new InvalidOperationException(); } 
 
     // Save id db info for api (key - token)
-    //await initialCall.InitialApiAccess();
+    await initialCall.InitialApiAccess();
 }
 
 

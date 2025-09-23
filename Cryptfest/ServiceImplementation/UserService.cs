@@ -32,7 +32,8 @@ public class UserService : IUserService
 
     public async Task<ToClientDto> LoginAsync(UserLogInfo loginUser)
     {
-        User? user = await _context.Users.FirstOrDefaultAsync(user => user.UserLogInfoId == loginUser.Id);
+        User? user = await _context.Users.Include(user => user.UserLogInfo).
+            FirstOrDefaultAsync(user => user.UserLogInfo.Login == loginUser.Login);
 
         if (user == null)
         {
@@ -44,7 +45,7 @@ public class UserService : IUserService
             };
         }
 
-        bool isPasswordValid = BCrypt.Net.BCrypt.Verify(user.UserLogInfo.HashPassword, loginUser.HashPassword);
+        bool isPasswordValid = BCrypt.Net.BCrypt.Verify(loginUser.HashPassword, user.UserLogInfo.HashPassword);
 
         if (isPasswordValid)
         {
@@ -82,7 +83,8 @@ public class UserService : IUserService
 
         User newUser = new User()
         {
-            UserLogInfo = registerUser
+            UserLogInfo = registerUser,
+            UserPersonalInfo = new UserPersonalInfo()
         };
 
         await _context.AddAsync(newUser);

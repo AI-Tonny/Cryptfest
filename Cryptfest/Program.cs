@@ -1,5 +1,6 @@
 using API.Data;
 using API.Interfaces.Services.Crypto;
+using Cryptfest.Interfaces.Services.InitialCall;
 using Cryptfest.ServiceImpementation;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,6 +16,8 @@ builder.Services.AddDbContext<ApplicationContext>(context =>
 builder.Services.AddAutoMapper(conf => { }, typeof(Program));
 
 builder.Services.AddScoped<ICryptoService, CryptoService>();
+builder.Services.AddScoped<IInitialCallService, InitialCallService>();
+
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -27,11 +30,20 @@ var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
+    // Create db
     var context = scope.ServiceProvider.GetRequiredService<ApplicationContext>();
-
     await context.Database.EnsureDeletedAsync();
     await context.Database.EnsureCreatedAsync();
+    
+    // Take crypto assets from api and save in db
+    var initialCall = scope.ServiceProvider.GetRequiredService<IInitialCallService>();
+    //bool init = await initialCall.SaveAssetsInDbFromApi();                                         // ============> this may be an error
+    //if (init is false) { throw new InvalidOperationException(); } 
+
+    // Save id db info for api (key - token)
+    //await initialCall.InitialApiAccess();
 }
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

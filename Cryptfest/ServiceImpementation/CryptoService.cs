@@ -1,15 +1,14 @@
 ﻿using API.Data;
 using API.Data.Entities.Wallet;
+using API.Data.Entities.WalletEntities;
 using API.Interfaces.Services.Crypto;
-using API.Model.Dtos;
 using AutoMapper;
-using Azure;
 using Cryptfest.Enums;
 using Cryptfest.Model.Dtos;
-using Microsoft.AspNetCore.Http.HttpResults;
-using System.Net.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Cryptfest.ServiceImpementation;
 
@@ -19,7 +18,7 @@ public class CryptoService : ICryptoService
     private readonly IHttpClientFactory _httpClient;
     private readonly IMapper _mapper;
 
-    public CryptoService(ApplicationContext context, IHttpClientFactory httpClient, IMapper mapper)
+    public CryptoService(ApplicationContext context, IHttpClientFactory httpClient, IMapper mapper )
     {
         _context = context;
         _httpClient = httpClient;
@@ -27,35 +26,67 @@ public class CryptoService : ICryptoService
     }
 
 
-    public async Task<ToClientDto> GetListOfAssetsAsync()
+    public async Task<ToClientDto> GetListOfAssetsWithPricesAsync()
     {
-        string url = "https://api.freecryptoapi.com/v1/getCryptoList?token=h5hof99iiun4za7lpfia";
 
-        var client = _httpClient.CreateClient();
-        string output = "";
+        List<CryptoAssetInfo> cryptoAssets = await _context.CryptoAssetInfo.ToListAsync();
+
+        HttpClient client = _httpClient.CreateClient();
+        
+        var keyAndToken = _context.ApiAccess.ToList().First();  
+        client.DefaultRequestHeaders.Add($"{keyAndToken.Key}",$"{keyAndToken.Token}");
+        string url = "https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest";
 
         try
         {
             HttpResponseMessage response = await client.GetAsync(url);
             response.EnsureSuccessStatusCode();
 
-            using var stream = await response.Content.ReadAsStreamAsync();
+            var receivedJson = await response.Content.ReadAsStringAsync();
 
-            var resFromStream = JsonSerializer.Deserialize<GetListOfAssetsDto>(stream)!;
+            JsonDocument doc = JsonDocument.Parse(receivedJson);
+            JsonElement json = doc.RootElement;
 
-            if (output is null) 
-            { 
-                throw new InvalidOperationException ("External API returned invalid data"); 
+            var data = json.GetProperty("data");
+
+            // variables for loop 
+            CryptoAssetInfo? asset = new();
+            decimal price, PercentChange1h, PercentChange24h, PercentChange7d, PercentChange30d, PercentChange60d;
+            JsonElement forPrice;
+
+            foreach (var item in data.EnumerateArray())
+            {
+                string symbol = item.GetProperty("symbol").GetString()!;
+                asset = await _context.CryptoAssetInfo.FirstOrDefaultAsync(x => x.Symbol == symbol);
+                if (asset is not null)
+                {
+                    forPrice = item.GetProperty("quote").GetProperty("USD");
+                    forPrice.GetProperty("price").TryGetDecimal(out price);
+                    forPrice.GetProperty("percent_change_1h").TryGetDecimal(out PercentChange1h);
+                    forPrice.GetProperty("percent_change_24h").TryGetDecimal(out PercentChange24h);
+                    forPrice.GetProperty("percent_change_7d").TryGetDecimal(out PercentChange7d);
+                    forPrice.GetProperty("percent_change_30d").TryGetDecimal(out PercentChange30d);
+                    forPrice.GetProperty("percent_change_60d").TryGetDecimal(out PercentChange60d);
+
+
+                    asset.Price = new CryptoAssetPrice()
+                    {
+                        Price = price,
+                        PercentChange1h = PercentChange1h,
+                        PercentChange24h = PercentChange24h,
+                        PercentChange7d = PercentChange7d,
+                        PercentChange30d = PercentChange30d,
+                        PercentChange60d = PercentChange60d
+                    };
+                    
+                }
             }
 
-            var listOfAssets = _mapper.Map<List<CryptoAssetInfo>>(resFromStream.Result);
-
-            var resultDto = new ToClientDto
+            ToClientDto resultDto = new ToClientDto()
             {
                 Status = ResponseStatus.Success,
-                Data = listOfAssets
+                Data = cryptoAssets
             };
-
             return resultDto;
         }
         catch (HttpRequestException ex)
@@ -79,6 +110,28 @@ public class CryptoService : ICryptoService
             };
             return errorDto;
         }
-
     }
+
+
+    //public async Task<ToClientDto> GetAssetBySymbolAsync(string symbol)
+    //{
+    //    string token = "h5hof99iiun4za7lpfia";
+    //    string url = "https://api.freecryptoapi.com/v1/getData?symbol={symbol}&token={token}";
+
+    //    HttpClient client = _httpClient.CreateClient();
+
+    //    try
+    //    {
+    //        HttpResponseMessage response = await client.GetAsync(url);
+    //        response.EnsureSuccessStatusCode();
+
+    //        using Stream stream = response.Content.ReadAsStream();
+
+    //        string output = JsonSerializer.Serialize(stream);
+    //    }
+    //    catch
+    //    {
+
+    //    }
+    //}
 }

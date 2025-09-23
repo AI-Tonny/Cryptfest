@@ -7,6 +7,8 @@ namespace API.Data.Entities.WalletEntities;
 public class CryptoTransfer
 {
     public int Id { get; set; }
+
+    [Column(TypeName = "decimal(10, 2)")]
     public decimal Amount { get; set; }
     public int CryptoId { get; set; }
     public CryptoAssetInfo Crypto { get; set; } = default!;

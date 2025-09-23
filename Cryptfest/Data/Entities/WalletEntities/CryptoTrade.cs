@@ -8,6 +8,8 @@ public class CryptoTrade
     public int CryptoInfoId { get; set; }
     [ForeignKey(nameof(CryptoInfoId))]
     public CryptoAssetInfo CryptoInfo {  get; set; } = default!;
+
+    [Column(TypeName = "decimal(10, 2)")]
     public decimal Price { get; set; }  
     public DateTime Date { get; set; }
     public decimal Amount { get; set; }

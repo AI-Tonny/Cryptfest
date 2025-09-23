@@ -31,6 +31,6 @@ public class CryptoController : ControllerBase
     [HttpGet("GetAssetBySymbol/{symbol}")]
     public async Task<IActionResult> GetAssetBySymbol(string symbol)
     {
-        return BadRequest();
+        
     }
 }

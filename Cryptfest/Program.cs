@@ -3,9 +3,11 @@ using API.Interfaces.Services.Crypto;
 using Cryptfest.Interfaces.Repositories;
 using Cryptfest.Interfaces.Services.InitialCall;
 using Cryptfest.Interfaces.Services.User;
+using Cryptfest.Interfaces.Validation;
 using Cryptfest.Repositories;
 using Cryptfest.ServiceImpementation;
 using Cryptfest.ServiceImplementation;
+using Cryptfest.Validation;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,6 +22,7 @@ builder.Services.AddDbContext<ApplicationContext>(context =>
 builder.Services.AddAutoMapper(conf => { }, typeof(Program));
 
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddTransient<IUserValidation, UserValidation>();
 builder.Services.AddScoped<ICryptoService, CryptoService>();
 builder.Services.AddScoped<IInitialCallService, InitialCallService>();
 builder.Services.AddScoped<ICryptoAssetRopository, CryptoAssetRepository>();

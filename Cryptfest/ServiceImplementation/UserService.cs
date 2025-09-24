@@ -2,19 +2,22 @@
 using API.Data.Entities.UserEntities;
 using Cryptfest.Enums;
 using Cryptfest.Interfaces.Services.User;
+using Cryptfest.Interfaces.Validation;
+using Cryptfest.Model;
 using Cryptfest.Model.Dtos;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 
 namespace Cryptfest.ServiceImplementation;
 
 public class UserService : IUserService
 {
     private readonly ApplicationContext _context;
+    private readonly IUserValidation _userValidation;
 
-    public UserService(ApplicationContext context)
+    public UserService(ApplicationContext context, IUserValidation userValidation)
     {
         _context = context;
+        _userValidation = userValidation;
     }
 
     //public async Task<ToClientDto> ChangeUserDataAsync(int userId, User newUserData)
@@ -32,8 +35,19 @@ public class UserService : IUserService
 
     public async Task<ToClientDto> LoginAsync(UserLogInfo loginUser)
     {
-        User? user = await _context.Users.Include(user => user.UserLogInfo).
-            FirstOrDefaultAsync(user => user.UserLogInfo.Login == loginUser.Login);
+        ValidationResult isLoginValid = _userValidation.IsLoginValid(loginUser.Login);
+        ValidationResult isPasswordValid = _userValidation.IsPasswordValid(loginUser.HashPassword);
+
+        if (!isLoginValid.isValid || !isPasswordValid.isValid)
+        {
+            return new ToClientDto()
+            {
+                Message = isLoginValid.isValid ? isPasswordValid.Message : isLoginValid.Message,
+                Status = ResponseStatus.Fail,
+            };
+        }
+
+        User? user = await FindUserByLoginAsync(loginUser.Login);
 
         if (user == null)
         {
@@ -41,13 +55,12 @@ public class UserService : IUserService
             {
                 Message = "This account doesn't exist",
                 Status = ResponseStatus.Fail,
-                Data = null
             };
         }
 
-        bool isPasswordValid = BCrypt.Net.BCrypt.Verify(loginUser.HashPassword, user.UserLogInfo.HashPassword);
+        bool isHashPasswordValid = BCrypt.Net.BCrypt.Verify(loginUser.HashPassword, user.UserLogInfo.HashPassword);
 
-        if (isPasswordValid)
+        if (isHashPasswordValid)
         {
             return new ToClientDto()
             {
@@ -67,15 +80,26 @@ public class UserService : IUserService
 
     public async Task<ToClientDto> RegisterAsync(UserLogInfo registerUser)
     {
-        UserLogInfo? user = await _context.UserLogInfo.FirstOrDefaultAsync(user => user.Login == registerUser.Login);
+        ValidationResult isLoginValid = _userValidation.IsLoginValid(registerUser.Login);
+        ValidationResult isPasswordValid = _userValidation.IsPasswordValid(registerUser.HashPassword);
+
+        if (!isLoginValid.isValid || !isPasswordValid.isValid)
+        {
+            return new ToClientDto()
+            {
+                Message = isLoginValid.isValid ? isPasswordValid.Message : isLoginValid.Message,
+                Status = ResponseStatus.Fail,
+            };
+        }
+
+        UserLogInfo? user = await FindUserLogInfoByLoginAsync(registerUser.Login);
 
         if (user != null)
         {
             return new ToClientDto()
             {
-                Message = "This login already exists",
-                Status = ResponseStatus.Fail,
-                Data = null
+                Message = "This login is already taken",
+                Status = ResponseStatus.Fail
             };
         }
 
@@ -84,7 +108,8 @@ public class UserService : IUserService
         User newUser = new User()
         {
             UserLogInfo = registerUser,
-            UserPersonalInfo = new UserPersonalInfo()
+            UserPersonalInfo = new UserPersonalInfo(),
+            CreatedDate = DateTime.Now
         };
 
         await _context.AddAsync(newUser);
@@ -95,5 +120,19 @@ public class UserService : IUserService
             Status = ResponseStatus.Success,
             Data = newUser
         };
+    }
+
+    public async Task<User?> FindUserByLoginAsync(string login)
+    {
+        return await _context.Users
+            .Include(user => user.UserLogInfo)
+            .Include(user => user.UserPersonalInfo)
+            .FirstOrDefaultAsync(user => user.UserLogInfo.Login == login);
+    }
+
+    public async Task<UserLogInfo?> FindUserLogInfoByLoginAsync(string login)
+    {
+        return await _context.UserLogInfo
+            .FirstOrDefaultAsync(userLogInfo => userLogInfo.Login == login);
     }
 }

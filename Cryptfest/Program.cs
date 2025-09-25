@@ -2,7 +2,10 @@ using API.Data;
 using API.Data.Entities.WalletEntities;
 using Cryptfest.Interfaces.Repositories;
 using Cryptfest.Repositories;
+using Cryptfest.Interfaces.Services.User;
+using Cryptfest.Repositories;
 using Cryptfest.ServiceImpementation;
+using Cryptfest.ServiceImplementation;
 using Microsoft.EntityFrameworkCore;
 using API.Data.Entities.UserEntities;
 using API.Data.Entities.Wallet;
@@ -21,6 +24,7 @@ builder.Services.AddDbContext<ApplicationContext>(context =>
 
 builder.Services.AddAutoMapper(conf => { }, typeof(Program));
 
+builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ICryptoService, CryptoService>();
 builder.Services.AddScoped<IInitialCallService, InitialCallService>();
 builder.Services.AddScoped<ICryptoAssetRepository, CryptoAssetRepository>();
@@ -46,7 +50,7 @@ using (var scope = app.Services.CreateScope())
 {
     // Create db
     var context = scope.ServiceProvider.GetRequiredService<ApplicationContext>();
-    await context.Database.EnsureDeletedAsync();
+    //await context.Database.EnsureDeletedAsync();
     await context.Database.EnsureCreatedAsync();
 
     // Take crypto assets from api and save in db

@@ -53,7 +53,7 @@ public class UserService : IUserService
         {
             return new ToClientDto()
             {
-                Message = "This account doesn't exist",
+                Message = "This account does not exist",
                 Status = ResponseStatus.Fail,
             };
         }

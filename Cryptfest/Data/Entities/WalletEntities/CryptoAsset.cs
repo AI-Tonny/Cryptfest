@@ -3,14 +3,14 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace API.Data.Entities.Wallet;
 
-public class CryptoAssetInfo
+public class CryptoAsset
 {
     public int Id { get; set; }
     public string Symbol { get; set; } = "";
     public string Name { get; set; } = "";
     public string Logo { get; set; } = "";
-    public int? PriceId { get; set; }
-    [ForeignKey(nameof(PriceId))]
-    public CryptoAssetPrice? Price { get; set; }
+    public int MarketDataId { get; set; }
+    [ForeignKey(nameof(MarketDataId))]
+    public CryptoAssetMarketData MarketData { get; set; } = default!;
 }
 

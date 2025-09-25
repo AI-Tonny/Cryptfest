@@ -1,117 +1,30 @@
 ﻿using API.Data.Entities.Wallet;
 using API.Data.Entities.WalletEntities;
-using API.Interfaces.Services.Crypto;
 using AutoMapper;
 using Cryptfest.Enums;
 using Cryptfest.Interfaces.Repositories;
+using Cryptfest.Interfaces.Services;
 using Cryptfest.Model.Dtos;
+using System.Collections.Generic;
+using System.Reflection.Metadata.Ecma335;
 using System.Text.Json;
 
 namespace Cryptfest.ServiceImpementation;
 
 public class CryptoService : ICryptoService
 {
-    private readonly ICryptoAssetRopository _cryptoAssetRopository;
-    private readonly IHttpClientFactory _httpClient;
-    private readonly IMapper _mapper;
+    private readonly ICryptoAssetRepository _cryptoAssetRepository;
+    private readonly IApiService _api;
 
-    public CryptoService(ICryptoAssetRopository cryptoAssetRopository, IHttpClientFactory httpClient, IMapper mapper)
+    public CryptoService(ICryptoAssetRepository cryptoAssetRepository, IHttpClientFactory httpClient, IMapper mapper, IApiService api)
     {
-        _cryptoAssetRopository = cryptoAssetRopository;
-        _httpClient = httpClient;
-        _mapper = mapper;
+        _cryptoAssetRepository = cryptoAssetRepository;
+        _api = api;
     }
-
-    public async Task<ToClientDto> GetListOfAssetsWithPricesAsync()
-    {
-
-        List<CryptoAssetInfo> cryptoAssets = await _cryptoAssetRopository.GetCryptoAssetsAsync();
-
-        HttpClient client = _httpClient.CreateClient();
-
-        var keyAndToken = _cryptoAssetRopository.GetApiAccess();  
-        client.DefaultRequestHeaders.Add($"{keyAndToken.Key}",$"{keyAndToken.Token}");
-        string url = "https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest";
-
-        try
-        {
-            HttpResponseMessage response = await client.GetAsync(url);
-            response.EnsureSuccessStatusCode();
-
-            var receivedJson = await response.Content.ReadAsStringAsync();
-
-            JsonDocument doc = JsonDocument.Parse(receivedJson);
-            JsonElement json = doc.RootElement;
-
-            var data = json.GetProperty("data");
-
-            // variables for loop 
-            CryptoAssetInfo? asset = new();
-            decimal price, PercentChange1h, PercentChange24h, PercentChange7d, PercentChange30d, PercentChange60d;
-            JsonElement forPrice;
-
-            foreach (var item in data.EnumerateArray())
-            {
-                string symbol = item.GetProperty("symbol").GetString()!;
-                asset = await _cryptoAssetRopository.GetCryptoAssetBySymbolAsync(symbol);
-                if (asset is not null)
-                {
-                    forPrice = item.GetProperty("quote").GetProperty("USD");
-                    forPrice.GetProperty("price").TryGetDecimal(out price);
-                    forPrice.GetProperty("percent_change_1h").TryGetDecimal(out PercentChange1h);
-                    forPrice.GetProperty("percent_change_24h").TryGetDecimal(out PercentChange24h);
-                    forPrice.GetProperty("percent_change_7d").TryGetDecimal(out PercentChange7d);
-                    forPrice.GetProperty("percent_change_30d").TryGetDecimal(out PercentChange30d);
-                    forPrice.GetProperty("percent_change_60d").TryGetDecimal(out PercentChange60d);
-
-
-                    asset.Price = new CryptoAssetPrice()
-                    {
-                        Price = price,
-                        PercentChange1h = PercentChange1h,
-                        PercentChange24h = PercentChange24h,
-                        PercentChange7d = PercentChange7d,
-                        PercentChange30d = PercentChange30d,
-                        PercentChange60d = PercentChange60d
-                    };
-                    
-                }
-            }
-
-            ToClientDto resultDto = new ToClientDto()
-            {
-                Status = ResponseStatus.Success,
-                Data = cryptoAssets
-            };
-            return resultDto;
-        }
-        catch (HttpRequestException ex)
-        {
-
-            ToClientDto errorDto = new ToClientDto
-            {
-                Message = "Failed to get data from external API",
-                Status = ResponseStatus.Fail,
-            };
-
-            return errorDto;
-        }
-
-        catch (Exception ex)
-        {
-            var errorDto = new ToClientDto
-            {
-                Message = $"Unexpected error: {ex.Message}",
-                Status = ResponseStatus.Fail,
-            };
-            return errorDto;
-        }
-    }
-
 
     public async Task<ToClientDto> GetAssetBySymbolAsync(string symbol)
     {
-        CryptoAssetInfo? output = await _cryptoAssetRopository.GetCryptoAssetBySymbolAsync(symbol);
+        CryptoAsset? output = await _cryptoAssetRepository.GetCryptoAssetBySymbolAsync(symbol);
         if(output is not null)
         {
             return new ToClientDto
@@ -129,5 +42,83 @@ public class CryptoService : ICryptoService
             };
         }
     }
+
+    public async Task<ToClientDto> GetWalletAsync(int walletId)
+    {
+
+        List<CryptoAsset> currentPrices = (List<CryptoAsset>)(await _api.GetAssetsWithPricesAsync()).Data!;
+        Wallet? wallet = await _cryptoAssetRepository.GetWalletByIdAsync(walletId);
+
+        if(currentPrices is null)
+        {
+            return new()
+            {
+                Message = "No asset data available or error in external API",
+                Status = ResponseStatus.Fail,
+            };
+        }
+
+        if (wallet is null)
+        {
+            return new()
+            {
+                Message = "Such wallet does not exists",
+                Status = ResponseStatus.Fail,
+            };
+        }
+
+
+        decimal totalAssetsSum = 0;
+        CryptoAsset? foundElement = null;
+
+        // проходжусь по масиву активів, які є в гаманці
+        foreach (var asset in wallet.Balances!)
+        {
+            // треба знайти різницю між поточною ціною(assetListWithPrices) та ціною за яку був куплений актив(asset)
+            foundElement = currentPrices.FirstOrDefault(x => x.Symbol == asset.Asset.Symbol);
+
+
+            if (foundElement is null)
+            {
+                return new()
+                {
+                    Message = "this asset does not exist in db",
+                    Status = ResponseStatus.Fail,
+                };
+            }
+            totalAssetsSum += (foundElement.MarketData.CurrPrice * asset.Amount);
+
+            asset.Asset.MarketData.CurrPrice = foundElement.MarketData.CurrPrice;  
+            asset.Asset.MarketData.PercentChange1h = foundElement.MarketData.PercentChange1h;
+            asset.Asset.MarketData.PercentChange24h = foundElement.MarketData.PercentChange24h;
+            asset.Asset.MarketData.PercentChange7d = foundElement.MarketData.PercentChange7d;
+            asset.Asset.MarketData.PercentChange30d = foundElement.MarketData.PercentChange30d;
+            asset.Asset.MarketData.PercentChange60d = foundElement.MarketData.PercentChange60d;
+        }
+
+        wallet.Statistic = new()
+        {
+            TotalDeposit = wallet.Statistic.TotalDeposit,
+            TotalAssets = totalAssetsSum,
+            Apy = 100 * (totalAssetsSum - wallet.Statistic.TotalDeposit) / (wallet.Statistic.TotalDeposit)
+        };
+
+        //(await _cryptoAssetRepository.SaveChangesAsync()) :
+        //    return new()
+        //    {
+        //        Status = ResponseStatus.Success,
+        //        Data = wallet,
+        //    };
+        //?
+
+        await _cryptoAssetRepository.SaveChangesAsync();
+        ToClientDto output = new()
+        {
+            Status = ResponseStatus.Success,
+            Data = wallet,
+        };
+        return output;
+    }
+
 
 }

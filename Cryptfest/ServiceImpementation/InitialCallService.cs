@@ -1,7 +1,7 @@
 ﻿using API.Data;
 using API.Data.Entities.Wallet;
 using Cryptfest.Data.Entities.Api;
-using Cryptfest.Interfaces.Services.InitialCall;
+using Cryptfest.Interfaces.Services;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Concurrent;
@@ -68,7 +68,7 @@ public class InitialCallService : IInitialCallService
             string name = "";
             string logo = "";
 
-            List<CryptoAssetInfo> assetsInfo = new List<CryptoAssetInfo>();
+            List<CryptoAsset> assetsInfo = new List<CryptoAsset>();
 
             foreach (var item in items.EnumerateArray())
             {
@@ -76,15 +76,18 @@ public class InitialCallService : IInitialCallService
                 name = item.GetProperty("name").GetString() ?? "";
 
 
-                assetsInfo.Add(new CryptoAssetInfo
+                assetsInfo.Add(new CryptoAsset
                 {
                     Name = name,
                     Symbol = symbol,
+                    MarketData = new()
+                    {
+                        CurrPrice = 0
+                    }
                 });
             }
 
             ConcurrentDictionary<string, string> logos = new ConcurrentDictionary<string, string>();
-            object obj = new object();
 
             ParallelOptions options = new ParallelOptions()
             {
@@ -94,7 +97,11 @@ public class InitialCallService : IInitialCallService
             await Parallel.ForEachAsync(assetsInfo, options, async (symbolName, token) =>
             {
                 logo = await GetAssetLogo(symbolName.Symbol);
-                logos[symbolName.Symbol] = logo;
+                if (!string.IsNullOrEmpty(logo))
+                {
+                    logos[symbolName.Symbol] = logo;
+                }
+                
             });
 
             foreach (var item in assetsInfo)
@@ -108,7 +115,7 @@ public class InitialCallService : IInitialCallService
             await _context.SaveChangesAsync();
             return true;
         }
-        catch (Exception ex) { return false; }
+        catch (Exception ex) { throw; }
 
     }
 

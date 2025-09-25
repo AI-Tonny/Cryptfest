@@ -1,13 +1,15 @@
 ﻿using API.Data.Entities.Wallet;
+using Cryptfest.Data.Entities.WalletEntities;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace API.Data.Entities.WalletEntities;
 
-public class CryptoAssetPrice
+public class CryptoAssetMarketData
 {
     public int Id { get; set; }
+
     [Column(TypeName = "decimal(10, 2)")]
-    public decimal Price { get; set; }
+    public decimal CurrPrice { get; set; }
     [Column(TypeName = "decimal(10, 2)")]
     public decimal PercentChange1h { get; set; }
 
@@ -22,5 +24,4 @@ public class CryptoAssetPrice
 
     [Column(TypeName = "decimal(10, 2)")]
     public decimal PercentChange60d { get; set; }
-
 }

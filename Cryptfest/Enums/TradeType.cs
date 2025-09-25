@@ -1,6 +1,6 @@
 ﻿
 public enum TradeType
 {
-    Income,
-    Expense
+    FromUsd,
+    ToUsd
 }

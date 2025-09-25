@@ -1,4 +1,4 @@
-﻿namespace Cryptfest.Interfaces.Services.InitialCall;
+﻿namespace Cryptfest.Interfaces.Services;
 
 public interface IInitialCallService
 {

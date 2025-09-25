@@ -15,5 +15,4 @@ public class User
     public UserLogInfo UserLogInfo { get; set; } = default!;
 
     public DateTime CreatedDate { get; set; }
-
 }

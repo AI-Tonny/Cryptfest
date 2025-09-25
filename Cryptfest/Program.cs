@@ -2,7 +2,6 @@ using API.Data;
 using API.Data.Entities.WalletEntities;
 using Cryptfest.Interfaces.Repositories;
 using Cryptfest.Repositories;
-using Cryptfest.Interfaces.Services.User;
 using Cryptfest.Interfaces.Validation;
 using Cryptfest.Repositories;
 using Cryptfest.ServiceImpementation;
@@ -33,9 +32,6 @@ builder.Services.AddScoped<IInitialCallService, InitialCallService>();
 builder.Services.AddScoped<ICryptoAssetRepository, CryptoAssetRepository>();
 builder.Services.AddScoped<IApiService, ApiService>();
 
-
-
-
 builder.Services.AddControllers()
     .AddJsonOptions(option =>
     {
@@ -53,7 +49,7 @@ using (var scope = app.Services.CreateScope())
 {
     // Create db
     var context = scope.ServiceProvider.GetRequiredService<ApplicationContext>();
-    //await context.Database.EnsureDeletedAsync();
+    await context.Database.EnsureDeletedAsync();
     await context.Database.EnsureCreatedAsync();
 
     // Take crypto assets from api and save in db

@@ -1,7 +1,7 @@
 ﻿using API.Data;
 using API.Data.Entities.UserEntities;
 using Cryptfest.Enums;
-using Cryptfest.Interfaces.Services.User;
+using Cryptfest.Interfaces.Services;
 using Cryptfest.Interfaces.Validation;
 using Cryptfest.Model;
 using Cryptfest.Model.Dtos;
@@ -19,19 +19,6 @@ public class UserService : IUserService
         _context = context;
         _userValidation = userValidation;
     }
-
-    //public async Task<ToClientDto> ChangeUserDataAsync(int userId, User newUserData)
-    //{
-    //    User? user = _context.Users.FirstOrDefault(user => user.Id == userId);
-
-    //    if (user == null) {
-    //        return new ToClientDto()
-    //        {
-    //            Message = $"User was not found to change the data",
-    //            Status = ResponseStatus.Fail
-    //        };
-    //    }
-    //}
 
     public async Task<ToClientDto> LoginAsync(UserLogInfo loginUser)
     {
@@ -88,7 +75,7 @@ public class UserService : IUserService
             return new ToClientDto()
             {
                 Message = isLoginValid.isValid ? isPasswordValid.Message : isLoginValid.Message,
-                Status = ResponseStatus.Fail,
+                Status = ResponseStatus.Fail
             };
         }
 
@@ -120,6 +107,28 @@ public class UserService : IUserService
             Status = ResponseStatus.Success,
             Data = newUser
         };
+    }
+
+    public async Task<ToClientDto> ChangeUserDataAsync(int userId, UserPersonalInfo newUserData)
+    {
+        User? user = await FindUserByIdAsync(userId);
+
+        if (user == null)
+        {
+            return new ToClientDto()
+            {
+                Message = $"User was not found to change the data",
+                Status = ResponseStatus.Fail
+            };
+        }
+    }
+
+    public async Task<User?> FindUserByIdAsync(int id)
+    {
+        return await _context.Users
+            .Include(user => user.UserLogInfo)
+            .Include(user => user.UserPersonalInfo)
+            .FirstOrDefaultAsync(user => user.Id == id);
     }
 
     public async Task<User?> FindUserByLoginAsync(string login)

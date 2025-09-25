@@ -1,7 +1,7 @@
 ﻿using API.Data.Entities.UserEntities;
 using Cryptfest.Model.Dtos;
 
-namespace Cryptfest.Interfaces.Services.User;
+namespace Cryptfest.Interfaces.Services;
 
 public interface IUserService
 {

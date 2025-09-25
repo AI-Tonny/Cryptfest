@@ -75,7 +75,7 @@ using (var scope = app.Services.CreateScope())
                 UserLogInfo = new UserLogInfo()
                 {
                     Login = "Vasya123",
-                    Password = "1234"
+                    HashPassword = "1234"
                 },
                 UserPersonalInfo = new UserPersonalInfo()
                 {

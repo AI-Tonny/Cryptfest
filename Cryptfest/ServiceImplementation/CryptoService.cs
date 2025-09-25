@@ -38,7 +38,7 @@ public class CryptoService : ICryptoService
             return new ToClientDto
             {
                 Status = ResponseStatus.Fail,
-                Message = "this asset does not exists"
+                Message = "This asset does not exist"
             };
         }
     }
@@ -62,7 +62,7 @@ public class CryptoService : ICryptoService
         {
             return new()
             {
-                Message = "Such wallet does not exists",
+                Message = "Such wallet does not exist",
                 Status = ResponseStatus.Fail,
             };
         }
@@ -103,20 +103,25 @@ public class CryptoService : ICryptoService
             Apy = 100 * (totalAssetsSum - wallet.Statistic.TotalDeposit) / (wallet.Statistic.TotalDeposit)
         };
 
-        //(await _cryptoAssetRepository.SaveChangesAsync()) :
-        //    return new()
-        //    {
-        //        Status = ResponseStatus.Success,
-        //        Data = wallet,
-        //    };
-        //?
 
-        await _cryptoAssetRepository.SaveChangesAsync();
-        ToClientDto output = new()
+        ToClientDto output;
+        bool saveResult = await _cryptoAssetRepository.SaveChangesAsync();
+        if (saveResult == true)
         {
-            Status = ResponseStatus.Success,
-            Data = wallet,
-        };
+            output = new()
+            {
+                Status = ResponseStatus.Success,
+                Data = wallet,
+            };
+        }
+        else
+        {
+            output = new()
+            {
+                Status = ResponseStatus.Fail,
+                Message = "Fail to save to db"
+            };
+        }
         return output;
     }
 

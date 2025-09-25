@@ -85,7 +85,7 @@ public class ApiService : IApiService
         }
         catch (HttpRequestException ex)
         {
-            throw;
+            //throw
             ToClientDto errorDto = new ToClientDto
             {
                 Message = "Failed to get data from external API",

@@ -39,7 +39,7 @@ public class UserService : IUserService
         {
             return new ToClientDto()
             {
-                Message = "This account doesn't exist",
+                Message = "This account does not exist",
                 Status = ResponseStatus.Fail,
                 Data = null
             };
@@ -73,7 +73,7 @@ public class UserService : IUserService
         {
             return new ToClientDto()
             {
-                Message = "This login already exists",
+                Message = "This login already exist",
                 Status = ResponseStatus.Fail,
                 Data = null
             };

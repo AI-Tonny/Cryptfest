@@ -10,11 +10,11 @@ public class Wallet
 
     public int StatisticId { get; set; }
     [ForeignKey(nameof(StatisticId))]
-    public WalletStatistic Statistic { get; set; } = default!;
+    public WalletStatistic Statistic { get; set; } = new();
 
     public int UserId { get; set; }
     [ForeignKey(nameof(UserId))]
-    public User User { get; set; } = default!;
+    public User User { get; set; } = new();
 
     public List<CryptoBalance> Balances { get; set; } = new();
 }

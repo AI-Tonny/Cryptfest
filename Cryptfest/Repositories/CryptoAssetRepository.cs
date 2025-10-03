@@ -18,7 +18,7 @@ namespace Cryptfest.Repositories
 
         public async Task<List<CryptoAsset>> GetCryptoAssetsAsync()
         {
-            List<CryptoAsset> output = await _context.CryptoAssetInfo.ToListAsync();
+            List<CryptoAsset> output = await _context.CryptoAsset.ToListAsync();
             return output;
         }
         public ApiAccess GetApiAccess()
@@ -29,7 +29,7 @@ namespace Cryptfest.Repositories
 
         public async Task<CryptoAsset?> GetCryptoAssetBySymbolAsync(string symbol)
         {
-            CryptoAsset? output = await _context.CryptoAssetInfo.FirstOrDefaultAsync(x => x.Symbol == symbol);
+            CryptoAsset? output = await _context.CryptoAsset.FirstOrDefaultAsync(x => x.Symbol == symbol);
             return output;
         }
 
@@ -62,5 +62,16 @@ namespace Cryptfest.Repositories
                 return false;
             }
         }
+
+        public void Update(object entity)
+        {
+            _context.Update(entity);
+        }
+
+        public async Task AddWalletAsync(Wallet wallet)
+        {
+            await _context.AddAsync(wallet);
+        }
+
     }
 }

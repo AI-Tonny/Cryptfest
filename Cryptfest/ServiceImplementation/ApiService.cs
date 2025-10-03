@@ -1,5 +1,6 @@
 ﻿using API.Data.Entities.Wallet;
 using API.Data.Entities.WalletEntities;
+using AutoMapper;
 using Cryptfest.Enums;
 using Cryptfest.Interfaces.Repositories;
 using Cryptfest.Interfaces.Services;
@@ -13,14 +14,16 @@ public class ApiService : IApiService
 {
     private readonly IHttpClientFactory _httpClient;
     private readonly ICryptoAssetRepository _cryptoAssetRepository;
+    private readonly IMapper _mapper;
 
-    public ApiService(IHttpClientFactory httpClient, ICryptoAssetRepository cryptoAssetRepository)
+    public ApiService(IHttpClientFactory httpClient, ICryptoAssetRepository cryptoAssetRepository, IMapper mapper)
     {
         _httpClient = httpClient;
         _cryptoAssetRepository = cryptoAssetRepository;
+        _mapper = mapper;
     }
 
-    public async Task<ToClientDto> GetAssetsWithPricesAsync()
+    public async Task<ToClientDto> GetAssetsMarketDataAsync()
     {
         List<CryptoAsset> cryptoAssets = await _cryptoAssetRepository.GetCryptoAssetsAsync();
 
@@ -76,10 +79,12 @@ public class ApiService : IApiService
                 }
             }
 
+            List<CryptoAssetDto> cryptoAssetsResult = _mapper.Map<List<CryptoAssetDto>>(cryptoAssets);
+
             ToClientDto resultDto = new ToClientDto()
             {
                 Status = ResponseStatus.Success,
-                Data = cryptoAssets
+                Data = cryptoAssetsResult
             };
             return resultDto;
         }

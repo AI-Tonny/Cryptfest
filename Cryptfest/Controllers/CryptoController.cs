@@ -24,16 +24,14 @@ public class CryptoController : ControllerBase
         _api = api;
     }
 
-    [HttpGet("GetListOfAssets")]
-    public async Task<IActionResult> GetListOfAssets()
+    [HttpGet("assets")]
+    public async Task<IActionResult> GetAssets()
     {
-        ToClientDto output = await _api.GetAssetsWithPricesAsync();
+        ToClientDto output = await _api.GetAssetsMarketDataAsync();
         return Ok(output);
     }
 
-
-
-    [HttpGet("GetAssetBySymbol/{symbol}")]
+    [HttpGet("assets/{symbol}")]
     public async Task<IActionResult> GetAssetBySymbol(string symbol)
     {
         ToClientDto output = await _cryptoService.GetAssetBySymbolAsync(symbol);  
@@ -41,13 +39,18 @@ public class CryptoController : ControllerBase
     }
 
 
-
-    [HttpGet("GetWallet/{walletId}")]
+    [HttpGet("wallets/{walletId}")]
     public async Task<IActionResult> GetWallet(int walletId)
     {
         ToClientDto output = await _cryptoService.GetWalletAsync(walletId);
         Console.WriteLine(output.Data);
         return Ok(output);  
     }
+
+    //[HttpPost]
+    //public async Task<IActionResult> ExecuteExchange(int walletId, string fromAssetSymbol, string toAssetSymbol, decimal amount)
+    //{
+    //    return NoContent();
+    //}
 }
 

@@ -11,4 +11,6 @@ public interface ICryptoAssetRepository
     Task<CryptoAsset?> GetCryptoAssetBySymbolAsync(string symbol);
     Task<Wallet?> GetWalletByIdAsync(int id);
     Task<bool> SaveChangesAsync();
+    public void Update(object entity);
+    Task AddWalletAsync(Wallet wallet);
 }

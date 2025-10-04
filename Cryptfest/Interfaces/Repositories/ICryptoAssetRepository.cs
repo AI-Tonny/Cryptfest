@@ -1,6 +1,7 @@
 ﻿using API.Data.Entities.Wallet;
 using API.Data.Entities.WalletEntities;
 using Cryptfest.Data.Entities.Api;
+using Cryptfest.Model.Dtos;
 
 namespace Cryptfest.Interfaces.Repositories;
 

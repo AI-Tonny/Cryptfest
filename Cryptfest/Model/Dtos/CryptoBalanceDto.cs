@@ -7,7 +7,6 @@ namespace Cryptfest.Model.Dtos;
 public class CryptoBalanceDto
 {
     public decimal Amount { get; set; }
-
     public decimal PurchasePrice { get; set; }
-    public CryptoAsset Asset { get; set; } = default!;
+    public CryptoAssetDto Asset { get; set; } = default!;
 }

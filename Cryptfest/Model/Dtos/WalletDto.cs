@@ -11,6 +11,6 @@ public class WalletDto
     public int Id { get; set; }
 
     public WalletStatisticDto Statistic { get; set; } = new();
-    public User User { get; set; } = new();
+    //public User User { get; set; } = new();
     public List<CryptoBalanceDto> Balances { get; set; } = new();
 }

@@ -43,8 +43,14 @@ public class CryptoController : ControllerBase
     public async Task<IActionResult> GetWallet(int walletId)
     {
         ToClientDto output = await _cryptoService.GetWalletAsync(walletId);
-        Console.WriteLine(output.Data);
         return Ok(output);  
+    }
+
+    [HttpPut]
+    public async Task<IActionResult> Deposit(int walletId, decimal amount)
+    {
+        ToClientDto output = await _cryptoService.EnsureDepositAsync(walletId, amount);
+        return Ok(output);
     }
 
     //[HttpPost]

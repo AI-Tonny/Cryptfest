@@ -18,7 +18,9 @@ namespace Cryptfest.Repositories
 
         public async Task<List<CryptoAsset>> GetCryptoAssetsAsync()
         {
-            List<CryptoAsset> output = await _context.CryptoAsset.ToListAsync();
+            List<CryptoAsset> output = await _context.CryptoAsset
+                .Include(x => x.MarketData)
+                .ToListAsync();
             return output;
         }
         public ApiAccess GetApiAccess()
@@ -29,7 +31,9 @@ namespace Cryptfest.Repositories
 
         public async Task<CryptoAsset?> GetCryptoAssetBySymbolAsync(string symbol)
         {
-            CryptoAsset? output = await _context.CryptoAsset.FirstOrDefaultAsync(x => x.Symbol == symbol);
+            CryptoAsset? output = await _context.CryptoAsset
+                .Include(x => x.MarketData)
+                .FirstOrDefaultAsync(x => x.Symbol == symbol);
             return output;
         }
 

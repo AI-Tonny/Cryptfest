@@ -9,6 +9,7 @@ using Cryptfest.Interfaces.Services;
 using Cryptfest.Model.Dtos;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore.Update.Internal;
+using System.Runtime.CompilerServices;
 
 namespace Cryptfest.ServiceImpementation;
 
@@ -86,18 +87,18 @@ public class CryptoService : ICryptoService
             {
                 return new()
                 {
-                    Message = "this asset does not exist in db",
+                    Message = "This asset does not exist in database",
                     Status = ResponseStatus.Fail,
                 };
             }
             totalAssetsSum += (foundElement.MarketData.CurrPrice * asset.Amount);
 
-            asset.Asset.MarketData.CurrPrice = foundElement.MarketData.CurrPrice;  
-            asset.Asset.MarketData.PercentChange1h = foundElement.MarketData.PercentChange1h;
-            asset.Asset.MarketData.PercentChange24h = foundElement.MarketData.PercentChange24h;
-            asset.Asset.MarketData.PercentChange7d = foundElement.MarketData.PercentChange7d;
-            asset.Asset.MarketData.PercentChange30d = foundElement.MarketData.PercentChange30d;
-            asset.Asset.MarketData.PercentChange60d = foundElement.MarketData.PercentChange60d;
+            //asset.Asset.MarketData.CurrPrice = foundElement.MarketData.CurrPrice;  
+            //asset.Asset.MarketData.PercentChange1h = foundElement.MarketData.PercentChange1h;
+            //asset.Asset.MarketData.PercentChange24h = foundElement.MarketData.PercentChange24h;
+            //asset.Asset.MarketData.PercentChange7d = foundElement.MarketData.PercentChange7d;
+            //asset.Asset.MarketData.PercentChange30d = foundElement.MarketData.PercentChange30d;
+            //asset.Asset.MarketData.PercentChange60d = foundElement.MarketData.PercentChange60d;
         }
 
 
@@ -125,7 +126,7 @@ public class CryptoService : ICryptoService
             output = new()
             {
                 Status = ResponseStatus.Fail,
-                Message = "Fail to save to db"
+                Message = "Failed to save to database"
             };
         }
         return output;
@@ -143,6 +144,81 @@ public class CryptoService : ICryptoService
 
         return isSaved;
     }
+
+
+    public async Task<ToClientDto> EnsureDepositAsync(int walletId, decimal amount)
+    {
+        Wallet? wallet = await _cryptoAssetRepository.GetWalletByIdAsync(walletId);
+        if (wallet is null)
+        {
+            return new()
+            {
+                Message = "Such wallet does not exist",
+                Status = ResponseStatus.Fail,
+            };
+        }
+        if(amount < 0) 
+        {
+            return new()
+            {
+                Message = "The amount can not to be less than 0",
+                Status = ResponseStatus.Fail,
+            };
+        }
+
+        wallet.Statistic.TotalDeposit += amount;
+
+        CryptoAsset? asset = await _cryptoAssetRepository.GetCryptoAssetBySymbolAsync("usdt");
+        if (asset is null)
+        {
+            return new()
+            {
+                Status = ResponseStatus.Fail,
+                Message = "This asset does not exist in database"
+            };
+        }
+
+        CryptoBalance? usdt = wallet.Balances.FirstOrDefault(x => x.Asset.Symbol.ToLower() == "usdt");
+
+        if(usdt is not null)
+        {
+            usdt.Amount += amount;
+        }
+        else
+        {
+
+            wallet.Balances.Add(new CryptoBalance()
+            {
+                Amount = amount,
+                Asset = asset,
+                PurchasePrice = asset.MarketData.CurrPrice,
+                Wallet = wallet
+            });
+        }
+
+
+
+        bool saveResult = await _cryptoAssetRepository.SaveChangesAsync();
+
+        WalletDto walletDto = _mapper.Map<Wallet, WalletDto>(wallet);
+
+        if (saveResult == true)
+        {
+            return new()
+            {
+                Status = ResponseStatus.Success,
+                Data = walletDto,
+            };
+        }
+        else
+        {
+            return new()
+            {
+                Status = ResponseStatus.Fail,
+                Message = "Failed to save to database"
+            };
+        }
+    } 
 
     //public async Task<ToClientDto> Exchange(int walletId, string fromAssetSymbol, string toAssetSymbol, decimal amount)
     //{

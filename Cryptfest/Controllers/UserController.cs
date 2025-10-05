@@ -1,5 +1,5 @@
 ﻿using API.Data.Entities.UserEntities;
-using Cryptfest.Interfaces.Services.User;
+using Cryptfest.Interfaces.Services;
 using Cryptfest.Model.Dtos;
 using Microsoft.AspNetCore.Mvc;
 

@@ -8,9 +8,11 @@ using Cryptfest.Data.Entities.WalletEntities;
 using API.Data.Entities.WalletEntities;
 using API.Data;
 using Cryptfest.Interfaces.Services;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Cryptfest.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class CryptoController : ControllerBase

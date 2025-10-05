@@ -5,7 +5,6 @@ using API.Data.Entities.WalletEntities;
 using Cryptfest.Data.Entities.WalletEntities;
 using Cryptfest.Interfaces.Repositories;
 using Cryptfest.Interfaces.Services;
-using Cryptfest.Interfaces.Services.User;
 using Cryptfest.Interfaces.Validation;
 using Cryptfest.Repositories;
 using Cryptfest.Repositories;
@@ -58,21 +57,23 @@ builder.Services.AddAuthentication(options =>
 
         ValidateAudience = true,
         ValidAudience = builder.Configuration["JwtSettings:Audience"],
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowFrontend",
-        policy =>
-        {
-            policy.WithOrigins("http://127.0.0.1:5500") 
-                  .AllowAnyHeader()
-                  .AllowAnyMethod();
-        });
-});
 
         ValidateLifetime = true,
         ClockSkew = TimeSpan.Zero
     };
 });
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend",
+        policy =>
+        {
+            policy.WithOrigins("http://127.0.0.1:5500")
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        });
+});
+
 builder.Configuration.AddJsonFile(
     path:"appsettings.apilinks.json",
     optional: false,

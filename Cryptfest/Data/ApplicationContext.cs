@@ -1,7 +1,6 @@
 ﻿using API.Data.Entities.UserEntities;
 using API.Data.Entities.Wallet;
 using API.Data.Entities.WalletEntities;
-using Cryptfest.Data.Entities.Api;
 using Cryptfest.Data.Entities.WalletEntities;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,7 +17,6 @@ public class ApplicationContext : DbContext
     public DbSet<UserLogInfo> UserLogInfo { get; set; }
     public DbSet<UserPersonalInfo> UserPersonalInfo { get; set; }
 
-    public DbSet<ApiAccess> ApiAccess { get; set; }
     public DbSet<Wallet> Wallets { get; set; }
     public DbSet<CryptoAsset> CryptoAsset { get; set; }
     public DbSet<CryptoExchange> CryptoExchanges { get; set; }

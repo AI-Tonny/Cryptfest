@@ -40,14 +40,18 @@ builder.Services.AddCors(options =>
         });
 });
 
+builder.Configuration.AddJsonFile(
+    path:"appsettings.apilinks.json",
+    optional: false,
+    reloadOnChange: true);
+
+builder.Configuration.AddJsonFile(
+    path: "appsettings.apitokens.json",
+    optional: false,
+    reloadOnChange: true);
 
 
 builder.Services.AddControllers();
-    //.AddJsonOptions(option =>
-    //{
-    //    option.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
-    //});
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -66,12 +70,10 @@ using (var scope = app.Services.CreateScope())
     await context.Database.EnsureCreatedAsync();
 
     // Take crypto assets from api and save in db
-    if ( !(context.CryptoAsset.Any() && context.ApiAccess.Any()) )
+    if ( !(context.CryptoAsset.Any()) )
     {
         var initialCall = scope.ServiceProvider.GetRequiredService<IInitialCallService>();
 
-        await initialCall.InitialApiAccess();
-        
         bool init = await initialCall.SaveAssetsInDbFromApi();                                      
         if (init is false) { throw new InvalidOperationException(); }
     }

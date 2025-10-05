@@ -16,27 +16,63 @@ public class ApiService : IApiService
     private readonly IHttpClientFactory _httpClient;
     private readonly ICryptoAssetRepository _cryptoAssetRepository;
     private readonly IMapper _mapper;
+    private readonly IConfiguration _conf;
 
-    public ApiService(IHttpClientFactory httpClient, ICryptoAssetRepository cryptoAssetRepository, IMapper mapper)
+    public ApiService(IHttpClientFactory httpClient, ICryptoAssetRepository cryptoAssetRepository, IMapper mapper, IConfiguration conf)
     {
         _httpClient = httpClient;
         _cryptoAssetRepository = cryptoAssetRepository;
         _mapper = mapper;
+        _conf = conf;
     }
 
-    public async Task<ToClientDto> GetAssetsMarketDataAsync()
+    public ApiAccessDto GetApiKeyToken()
+    {
+        try
+        {
+            ApiAccessDto output = new()
+            {
+                Key = _conf["ApiTokens:Crypto:Key"]!,
+                Token = _conf["ApiTokens:Crypto:Token"]!
+            };
+            return output;
+        }
+        catch { throw; }
+    }
+    public string GetTop30Asset()
+    {
+        try
+        {
+            string output = _conf["ApiLinks:Top30Assets"]!;
+            return output;
+        }
+        catch { throw; }
+    }
+
+    public string GetLatestData()
+    {
+        try
+        {
+            string output = _conf["ApiLinks:Latest"]!;
+            return output;
+        }
+        catch { throw; }
+    }
+
+
+    public async Task<ToClientDto> UpdateMarketDataInDbAsync()
     {
         List<CryptoAsset> cryptoAssets = await _cryptoAssetRepository.GetCryptoAssetsAsync();
 
         HttpClient client = _httpClient.CreateClient();
 
-        var keyAndToken = _cryptoAssetRepository.GetApiAccess();
+        var keyAndToken = GetApiKeyToken();
         client.DefaultRequestHeaders.Add($"{keyAndToken.Key}", $"{keyAndToken.Token}");
-        string url = "https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest";
+        string latestDataUrl = GetLatestData();
 
         try
         {
-            HttpResponseMessage response = await client.GetAsync(url);
+            HttpResponseMessage response = await client.GetAsync(latestDataUrl);
             response.EnsureSuccessStatusCode();
 
             var receivedJson = await response.Content.ReadAsStringAsync();

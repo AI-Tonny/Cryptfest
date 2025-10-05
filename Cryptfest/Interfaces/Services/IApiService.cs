@@ -5,5 +5,8 @@ namespace Cryptfest.Interfaces.Services;
 
 public interface IApiService
 {
-    Task<ToClientDto> GetAssetsMarketDataAsync();
+    Task<ToClientDto> UpdateMarketDataInDbAsync();
+    ApiAccessDto GetApiKeyToken();
+    string GetTop30Asset();
+    string GetLatestData();
 }

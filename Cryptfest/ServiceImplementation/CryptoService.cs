@@ -26,6 +26,12 @@ public class CryptoService : ICryptoService
         _mapper = mapper;
     }
 
+
+    public async Task<ToClientDto> GetAssetsAsync()
+    {
+        return await _api.UpdateMarketDataInDbAsync();
+    }
+
     public async Task<ToClientDto> GetAssetBySymbolAsync(string symbol)
     {
         CryptoAsset? output = await _cryptoAssetRepository.GetCryptoAssetBySymbolAsync(symbol);
@@ -50,7 +56,7 @@ public class CryptoService : ICryptoService
     public async Task<ToClientDto> GetWalletAsync(int walletId)
     {
 
-        List<CryptoAssetDto> currentPrices = (List<CryptoAssetDto>)(await _api.GetAssetsMarketDataAsync()).Data!;
+        List<CryptoAssetDto> currentPrices = (List<CryptoAssetDto>)(await _api.UpdateMarketDataInDbAsync()).Data!;
         Wallet? wallet = await _cryptoAssetRepository.GetWalletByIdAsync(walletId);
 
 
@@ -146,6 +152,7 @@ public class CryptoService : ICryptoService
     }
 
 
+
     public async Task<ToClientDto> EnsureDepositAsync(int walletId, decimal amount)
     {
         Wallet? wallet = await _cryptoAssetRepository.GetWalletByIdAsync(walletId);
@@ -178,11 +185,14 @@ public class CryptoService : ICryptoService
             };
         }
 
-        CryptoBalance? usdt = wallet.Balances.FirstOrDefault(x => x.Asset.Symbol.ToLower() == "usdt");
+        CryptoBalance? usdt = wallet.Balances.FirstOrDefault(x => x.Asset.Symbol.ToUpper() == "USDT");
 
-        if(usdt is not null)
+        //decimal inUsdt = usdt
+
+        if (usdt is not null)
         {
             usdt.Amount += amount;
+            usdt.Usdt += amount;
         }
         else
         {
@@ -190,6 +200,7 @@ public class CryptoService : ICryptoService
             wallet.Balances.Add(new CryptoBalance()
             {
                 Amount = amount,
+                Usdt = amount,
                 Asset = asset,
                 PurchasePrice = asset.MarketData.CurrPrice,
                 Wallet = wallet
@@ -218,67 +229,101 @@ public class CryptoService : ICryptoService
                 Message = "Failed to save to database"
             };
         }
-    } 
+    }
 
-    //public async Task<ToClientDto> Exchange(int walletId, string fromAssetSymbol, string toAssetSymbol, decimal amount)
-    //{
-    //    Wallet? wallet = await _cryptoAssetRepository.GetWalletByIdAsync(walletId);
-    //    if(wallet is null)
-    //    {
-    //        return new()
-    //        {
-    //            Message = "This wallet does not exist",
-    //            Status = ResponseStatus.Fail,
-    //        };
-    //    }
+    public async Task<ToClientDto> EnsureExchangeAsync(int walletId, string fromAssetSymbol, string toAssetSymbol, decimal amount)
+    {
+        await _api.UpdateMarketDataInDbAsync();
+        Wallet? wallet = await _cryptoAssetRepository.GetWalletByIdAsync(walletId);
+        if (wallet is null)
+        {
+            return new()
+            {
+                Message = "This wallet does not exist",
+                Status = ResponseStatus.Fail,
+            };
+        }
 
-    //    // does the fromAssetSymbol exist 
-    //    CryptoBalance? fromAsset = wallet.Balances.FirstOrDefault(x => x.Asset.Symbol == fromAssetSymbol);
+        // does the fromAssetSymbol exist in wallet
+        CryptoBalance? fromAsset = wallet.Balances.FirstOrDefault(x => x.Asset.Symbol.Equals(fromAssetSymbol,StringComparison.OrdinalIgnoreCase));
+        
+        
 
-    //    // does the toAssetSymbol exist
-    //    CryptoAsset? toAsset = await _cryptoAssetRepository.GetCryptoAssetBySymbolAsync(toAssetSymbol);
-    //    if(fromAsset is null)
-    //    {
-    //        return new()
-    //        {
-    //            Message = "This asset does not exist in the user's wallet",
-    //            Status = ResponseStatus.Fail,
-    //        };
-    //    }
-    //    else if(fromAsset.Amount < amount)
-    //    {
-    //        return new()
-    //        {
-    //            Message = "The wallet does not have the amount of this asset",
-    //            Status = ResponseStatus.Fail,
-    //        };
-    //    }
-    //    else if(toAsset is null)
-    //    {
-    //        return new()
-    //        {
-    //            Message = "The asset does not exist in db",
-    //            Status = ResponseStatus.Fail,
-    //        };
-    //    }
+        // does the toAssetSymbol exist in db
+        CryptoAsset? toAsset = await _cryptoAssetRepository.GetCryptoAssetBySymbolAsync(toAssetSymbol);
+        if (fromAsset is null)
+        {
+            return new()
+            {
+                Message = "This asset does not exist in the user's wallet",
+                Status = ResponseStatus.Fail,
+            };
+        }
+        else if (fromAsset.Amount < amount || amount <= 0)
+        {
+            return new()
+            {
+                Message = "The wallet does not have the amount of this asset",
+                Status = ResponseStatus.Fail,
+            };
+        }
+        else if (toAsset is null)
+        {
+            return new()
+            {
+                Message = "The asset does not exist in db",
+                Status = ResponseStatus.Fail,
+            };
+        }
 
 
-    //    decimal amountNewAssBal = (amount * fromAsset.Asset.MarketData.CurrPrice) / toAsset.MarketData.CurrPrice;
-    //    decimal purchasePrice = toAsset.MarketData.CurrPrice;
+        decimal newAssAmount = (amount * fromAsset.Asset.MarketData.CurrPrice) / toAsset.MarketData.CurrPrice;
+        decimal purchasePrice = toAsset.MarketData.CurrPrice;
 
-    //    CryptoBalance newAssBal = new()
-    //    {
-    //        Amount = amountNewAssBal,
-    //        Asset = toAsset,
-    //        PurchasePrice = purchasePrice,
-    //        Wallet = wallet,
-    //    };
+        // does this asset already exist in wallet if not, then create a new object of the instance, if yes, then update the info
+        CryptoBalance? asset = wallet.Balances.FirstOrDefault(x => x.Asset.Symbol.Equals(toAssetSymbol,StringComparison.OrdinalIgnoreCase));
+        if (asset is not null)
+        {
+            decimal totalOldValue = asset.PurchasePrice * asset.Amount;
+            decimal totalNewValue = purchasePrice * newAssAmount;
+            decimal totalAmount = asset.Amount + newAssAmount;
 
-    //    wallet.Balances.Remove(fromAsset);
-    //    wallet.Balances.Add(newAssBal);
+            asset.PurchasePrice = (totalOldValue + totalNewValue) / totalAmount; // we are looking for the average purchase price if the asset already existed
+            asset.Amount = totalAmount;
+            asset.Usdt = totalAmount * asset.PurchasePrice;
+        }
+        else
+        {
 
-    //    _cryptoAssetRepository.Update(wallet);
+            wallet.Balances.Add(new CryptoBalance()
+            {
+                Amount = newAssAmount,
+                Usdt = purchasePrice * newAssAmount,
+                Asset = toAsset,
+                PurchasePrice = purchasePrice,
+                Wallet = wallet
+            });
+        }
 
-    //    // transfer already is done, only APY left to update; 
-    //}
+        fromAsset.Amount -= amount;
+        fromAsset.Usdt = amount * fromAsset.Asset.MarketData.CurrPrice;
+
+
+        if (fromAsset.Amount == 0 || fromAsset.Amount < 0.00001m)
+        {
+            wallet.Balances.Remove(fromAsset);
+        }
+
+        await _cryptoAssetRepository.SaveChangesAsync();
+
+        List<CryptoBalanceDto> balances = _mapper.Map<List<CryptoBalanceDto>>(wallet.Balances);
+
+        return new()
+        {
+            Status = ResponseStatus.Success,
+            Data = balances,
+        };
+
+        // transfer already is done, only APY left to update; 
+    }
 }

@@ -1,13 +1,10 @@
 ﻿using API.Data;
 using API.Data.Entities.Wallet;
 using API.Data.Entities.WalletEntities;
-using Cryptfest.Data.Entities.Api;
-using Cryptfest.Enums;
+using Cryptfest.Interfaces.Repositories;
 using Cryptfest.Interfaces.Services;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Concurrent;
-using System.Net.Http;
 using System.Text.Json;
 
 namespace Cryptfest.ServiceImplementation;
@@ -17,11 +14,14 @@ public class InitialCallService : IInitialCallService
 
     private readonly ApplicationContext _context;
     private readonly IHttpClientFactory _httpClient;
+    private readonly ICryptoAssetRepository _cryptoAssetRepository;
     private readonly IApiService _api;
-    public InitialCallService(ApplicationContext context, IHttpClientFactory httpClient, IApiService api)
+
+    public InitialCallService(ApplicationContext context, IHttpClientFactory httpClient, ICryptoAssetRepository cryptoAssetRepository, IApiService api)
     {
         _context = context;
         _httpClient = httpClient;
+        _cryptoAssetRepository = cryptoAssetRepository;
         _api = api;
     }
 
@@ -51,16 +51,19 @@ public class InitialCallService : IInitialCallService
 
     public async Task<bool> SaveAssetsInDbFromApi()
     {
-        string mapUrl = "https://pro-api.coinmarketcap.com/v1/cryptocurrency/map?sort=cmc_rank&limit=30";
-        string listingsUrl = "https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest";
         var client = _httpClient.CreateClient();
-        //client.DefaultRequestHeaders.Add($"{_api.Key}", $"{_api.Token}");
-        client.DefaultRequestHeaders.Add("X-CMC_PRO_API_KEY", "fb2a0246-a49a-4299-929a-75de33fb37ec");
+
+        var keyAndToken = _api.GetApiKeyToken();
+
+        string top30 = _api.GetTop30Asset();
+        string latestDataUrl = _api.GetLatestData();
+
+        client.DefaultRequestHeaders.Add($"{keyAndToken.Key}", $"{keyAndToken.Token}");
 
         try
         {
 
-            string json = await client.GetStringAsync(mapUrl);
+            string json = await client.GetStringAsync(top30);
 
             JsonDocument doc = JsonDocument.Parse(json);
             JsonElement root = doc.RootElement;
@@ -122,7 +125,7 @@ public class InitialCallService : IInitialCallService
 
             // here taking info about price
 
-            var listingsJson = await client.GetStringAsync(listingsUrl);
+            var listingsJson = await client.GetStringAsync(latestDataUrl);
             var listingsDoc = JsonDocument.Parse(listingsJson);
             var listingsData = listingsDoc.RootElement.GetProperty("data");
 
@@ -175,16 +178,5 @@ public class InitialCallService : IInitialCallService
 
         catch (Exception ex) { throw; }
 
-    }
-
-    public async Task InitialApiAccess()
-    {
-        ApiAccess apiAccess = new ApiAccess()
-        {
-            Key = "X-CMC_PRO_API_KEY",
-            Token = "fb2a0246-a49a-4299-929a-75de33fb37ec"
-        };
-        await _context.AddAsync(apiAccess);  
-        await _context.SaveChangesAsync();  
     }
 }

@@ -1,7 +1,6 @@
 ﻿using API.Data;
 using API.Data.Entities.Wallet;
 using API.Data.Entities.WalletEntities;
-using Cryptfest.Data.Entities.Api;
 using Cryptfest.Interfaces.Repositories;
 using Microsoft.EntityFrameworkCore;
 
@@ -21,11 +20,6 @@ namespace Cryptfest.Repositories
             List<CryptoAsset> output = await _context.CryptoAsset
                 .Include(x => x.MarketData)
                 .ToListAsync();
-            return output;
-        }
-        public ApiAccess GetApiAccess()
-        {
-            ApiAccess output = _context.ApiAccess.ToList().First() ;
             return output;
         }
 

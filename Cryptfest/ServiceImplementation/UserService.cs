@@ -2,7 +2,6 @@
 using API.Data.Entities.UserEntities;
 using Cryptfest.Enums;
 using Cryptfest.Interfaces.Services;
-using Cryptfest.Interfaces.Services.User;
 using Cryptfest.Interfaces.Validation;
 using Cryptfest.Model;
 using Cryptfest.Model.Dtos;
@@ -30,9 +29,6 @@ public class UserService : IUserService
         _cryptoService = cryptoService;
         _configuration = configuration;
     }
-
-
-
 
     //public async Task<ToClientDto> ChangeUserDataAsync(int userId, User newUserData)
     //{

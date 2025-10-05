@@ -1,7 +1,6 @@
 ﻿using API.Data;
 using API.Data.Entities.Wallet;
 using API.Data.Entities.WalletEntities;
-using Cryptfest.Data.Entities.Api;
 using Cryptfest.Interfaces.Repositories;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,18 +17,17 @@ namespace Cryptfest.Repositories
 
         public async Task<List<CryptoAsset>> GetCryptoAssetsAsync()
         {
-            List<CryptoAsset> output = await _context.CryptoAssetInfo.ToListAsync();
-            return output;
-        }
-        public ApiAccess GetApiAccess()
-        {
-            ApiAccess output = _context.ApiAccess.ToList().First() ;
+            List<CryptoAsset> output = await _context.CryptoAsset
+                .Include(x => x.MarketData)
+                .ToListAsync();
             return output;
         }
 
         public async Task<CryptoAsset?> GetCryptoAssetBySymbolAsync(string symbol)
         {
-            CryptoAsset? output = await _context.CryptoAssetInfo.FirstOrDefaultAsync(x => x.Symbol == symbol);
+            CryptoAsset? output = await _context.CryptoAsset
+                .Include(x => x.MarketData)
+                .FirstOrDefaultAsync(x => x.Symbol == symbol);
             return output;
         }
 
@@ -62,5 +60,16 @@ namespace Cryptfest.Repositories
                 return false;
             }
         }
+
+        public void Update(object entity)
+        {
+            _context.Update(entity);
+        }
+
+        public async Task AddWalletAsync(Wallet wallet)
+        {
+            await _context.AddAsync(wallet);
+        }
+
     }
 }

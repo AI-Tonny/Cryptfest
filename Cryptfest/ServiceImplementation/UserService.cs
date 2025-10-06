@@ -1,5 +1,6 @@
 ﻿using API.Data;
 using API.Data.Entities.UserEntities;
+using Cryptfest.Data.Entities.AuthEntities;
 using Cryptfest.Enums;
 using Cryptfest.Interfaces.Services;
 using Cryptfest.Interfaces.Validation;
@@ -43,10 +44,10 @@ public class UserService : IUserService
     //    }
     //}
 
-    public async Task<ToClientDto> LoginAsync(UserLogInfo loginUser)
+    public async Task<ToClientDto> LoginAsync(LoginRequest loginRequest)
     {
-        ValidationResult isLoginValid = _userValidation.IsLoginValid(loginUser.Login);
-        ValidationResult isPasswordValid = _userValidation.IsPasswordValid(loginUser.HashPassword);
+        ValidationResult isLoginValid = _userValidation.IsLoginValid(loginRequest.Login);
+        ValidationResult isPasswordValid = _userValidation.IsPasswordValid(loginRequest.Password);
 
         if (!isLoginValid.isValid || !isPasswordValid.isValid)
         {
@@ -57,7 +58,7 @@ public class UserService : IUserService
             };
         }
 
-        User? user = await FindUserByLoginAsync(loginUser.Login);
+        User? user = await FindUserByLoginAsync(loginRequest.Login);
 
         if (user == null)
         {
@@ -68,7 +69,7 @@ public class UserService : IUserService
             };
         }
 
-        bool isHashPasswordValid = BCrypt.Net.BCrypt.Verify(loginUser.HashPassword, user.UserLogInfo.HashPassword);
+        bool isHashPasswordValid = BCrypt.Net.BCrypt.Verify(loginRequest.Password, user.UserLogInfo.HashPassword);
 
         if (isHashPasswordValid)
         {
@@ -88,10 +89,10 @@ public class UserService : IUserService
         }
     }
 
-    public async Task<ToClientDto> RegisterAsync(UserLogInfo registerUser)
+    public async Task<ToClientDto> RegisterAsync(RegisterRequest registerRequest)
     {
-        ValidationResult isLoginValid = _userValidation.IsLoginValid(registerUser.Login);
-        ValidationResult isPasswordValid = _userValidation.IsPasswordValid(registerUser.HashPassword);
+        ValidationResult isLoginValid = _userValidation.IsLoginValid(registerRequest.Login);
+        ValidationResult isPasswordValid = _userValidation.IsPasswordValid(registerRequest.Password);
 
         if (!isLoginValid.isValid || !isPasswordValid.isValid)
         {
@@ -102,7 +103,7 @@ public class UserService : IUserService
             };
         }
 
-        UserLogInfo? user = await FindUserLogInfoByLoginAsync(registerUser.Login);
+        UserLogInfo? user = await FindUserLogInfoByLoginAsync(registerRequest.Login);
 
         if (user != null)
         {
@@ -112,6 +113,13 @@ public class UserService : IUserService
                 Status = ResponseStatus.Fail
             };
         }
+
+        UserLogInfo registerUser = new UserLogInfo()
+        {
+            Login = registerRequest.Login,
+            Email = registerRequest.Email,
+            HashPassword = registerRequest.Password
+        };
 
         registerUser.HashPassword = BCrypt.Net.BCrypt.HashPassword(registerUser.HashPassword);
 

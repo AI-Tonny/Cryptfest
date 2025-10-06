@@ -36,6 +36,7 @@ builder.Services.AddScoped<ICryptoService, CryptoService>();
 builder.Services.AddScoped<IInitialCallService, InitialCallService>();
 builder.Services.AddScoped<ICryptoAssetRepository, CryptoAssetRepository>();
 builder.Services.AddScoped<IApiService, ApiService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 var key = Encoding.ASCII.GetBytes(builder.Configuration["JwtSettings:Secret"]!);
 

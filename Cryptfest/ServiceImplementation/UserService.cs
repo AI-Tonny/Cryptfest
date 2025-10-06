@@ -2,30 +2,33 @@
 using API.Data.Entities.UserEntities;
 using Cryptfest.Enums;
 using Cryptfest.Interfaces.Services;
-using Cryptfest.Interfaces.Services.User;
 using Cryptfest.Interfaces.Validation;
 using Cryptfest.Model;
 using Cryptfest.Model.Dtos;
 using Cryptfest.ServiceImpementation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace Cryptfest.ServiceImplementation;
 
 public class UserService : IUserService
 {
     private readonly ApplicationContext _context;
+
     private readonly IUserValidation _userValidation;
+    private readonly IConfiguration _configuration;
     private readonly ICryptoService _cryptoService;
 
-    public UserService(ApplicationContext context, IUserValidation userValidation, ICryptoService cryptoService)
+    public UserService(ApplicationContext context, IUserValidation userValidation, IConfiguration configuration, ICryptoService cryptoService)
     {
         _context = context;
         _userValidation = userValidation;
         _cryptoService = cryptoService;
+        _configuration = configuration;
     }
-
-
-
 
     //public async Task<ToClientDto> ChangeUserDataAsync(int userId, User newUserData)
     //{
@@ -72,7 +75,7 @@ public class UserService : IUserService
             return new ToClientDto()
             {
                 Status = ResponseStatus.Success,
-                Data = user
+                Data = GenerateJwtToken(user)
             };
         }
         else
@@ -124,8 +127,32 @@ public class UserService : IUserService
         return new ToClientDto()
         {
             Status = ResponseStatus.Success,
-            Data = newUser
+            Data = GenerateJwtToken(newUser)
         };
+    }
+
+    public string GenerateJwtToken(User user)
+    {
+        var tokenHandler = new JwtSecurityTokenHandler();
+
+        var key = Encoding.ASCII.GetBytes(_configuration["JwtSettings:Secret"]!);
+
+        var tokenDescriptor = new SecurityTokenDescriptor()
+        {
+            Subject = new ClaimsIdentity(new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Name, user.UserPersonalInfo.Name)
+            }),
+            Issuer = _configuration["JwtSettings:Issuer"],
+            Audience = _configuration["JwtSettings:Audience"],
+            Expires = DateTime.UtcNow.AddDays(7),
+            SigningCredentials = new SigningCredentials(
+                new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+        };
+
+        var token = tokenHandler.CreateToken(tokenDescriptor);
+        return tokenHandler.WriteToken(token);
     }
 
     public async Task<User?> FindUserByLoginAsync(string login)

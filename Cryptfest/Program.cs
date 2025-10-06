@@ -1,13 +1,21 @@
 using API.Data;
+using API.Data.Entities.UserEntities;
+using API.Data.Entities.Wallet;
+using API.Data.Entities.WalletEntities;
+using Cryptfest.Data.Entities.WalletEntities;
 using Cryptfest.Interfaces.Repositories;
 using Cryptfest.Interfaces.Services;
-using Cryptfest.Interfaces.Services.User;
 using Cryptfest.Interfaces.Validation;
+using Cryptfest.Repositories;
 using Cryptfest.Repositories;
 using Cryptfest.ServiceImpementation;
 using Cryptfest.ServiceImplementation;
 using Cryptfest.Validation;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 using Microsoft.Extensions.Options;
 using System.Text.Json.Serialization;
 
@@ -29,12 +37,38 @@ builder.Services.AddScoped<IInitialCallService, InitialCallService>();
 builder.Services.AddScoped<ICryptoAssetRepository, CryptoAssetRepository>();
 builder.Services.AddScoped<IApiService, ApiService>();
 
+var key = Encoding.ASCII.GetBytes(builder.Configuration["JwtSettings:Secret"]!);
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(options =>
+{
+    options.RequireHttpsMetadata = false;
+    options.SaveToken = true;
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(key),
+
+        ValidateIssuer = true,
+        ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
+
+        ValidateAudience = true,
+        ValidAudience = builder.Configuration["JwtSettings:Audience"],
+
+        ValidateLifetime = true,
+        ClockSkew = TimeSpan.Zero
+    };
+});
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend",
         policy =>
         {
-            policy.WithOrigins("http://127.0.0.1:5500") 
+            policy.WithOrigins("http://127.0.0.1:5500")
                   .AllowAnyHeader()
                   .AllowAnyMethod();
         });
@@ -93,6 +127,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

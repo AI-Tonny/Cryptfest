@@ -74,7 +74,7 @@ using (var scope = app.Services.CreateScope())
     {
         var initialCall = scope.ServiceProvider.GetRequiredService<IInitialCallService>();
 
-        bool init = await initialCall.SaveAssetsInDbFromApi();                                      
+        bool init = await initialCall.SaveAssetsInDbFromApi();    // comment                                 
         if (init is false) { throw new InvalidOperationException(); }
     }
 }

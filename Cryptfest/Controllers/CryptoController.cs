@@ -8,9 +8,11 @@ using Cryptfest.Data.Entities.WalletEntities;
 using API.Data.Entities.WalletEntities;
 using API.Data;
 using Cryptfest.Interfaces.Services;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Cryptfest.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class CryptoController : ControllerBase
@@ -24,16 +26,14 @@ public class CryptoController : ControllerBase
         _api = api;
     }
 
-    [HttpGet("GetListOfAssets")]
-    public async Task<IActionResult> GetListOfAssets()
+    [HttpGet("assets")]
+    public async Task<IActionResult> GetAssets()
     {
-        ToClientDto output = await _api.GetAssetsWithPricesAsync();
+        ToClientDto output = await _cryptoService.GetAssetsAsync();
         return Ok(output);
     }
 
-
-
-    [HttpGet("GetAssetBySymbol/{symbol}")]
+    [HttpGet("assets/{symbol}")]
     public async Task<IActionResult> GetAssetBySymbol(string symbol)
     {
         ToClientDto output = await _cryptoService.GetAssetBySymbolAsync(symbol);  
@@ -41,13 +41,25 @@ public class CryptoController : ControllerBase
     }
 
 
-
-    [HttpGet("GetWallet/{walletId}")]
+    [HttpGet("wallets/{walletId}")]
     public async Task<IActionResult> GetWallet(int walletId)
     {
         ToClientDto output = await _cryptoService.GetWalletAsync(walletId);
-        Console.WriteLine(output.Data);
         return Ok(output);  
+    }
+
+    [HttpPut("deposit")]
+    public async Task<IActionResult> Deposit([FromQuery] int walletId, decimal amount)
+    {
+        ToClientDto output = await _cryptoService.EnsureDepositAsync(walletId, amount);
+        return Ok(output);
+    }
+
+    [HttpPost("exchange")]
+    public async Task<IActionResult> Exchange(int walletId, string fromAssetSymbol, string toAssetSymbol, decimal amount)
+    {
+        ToClientDto output = await _cryptoService.EnsureExchangeAsync(walletId, fromAssetSymbol, toAssetSymbol, amount);
+        return Ok(output);
     }
 }
 

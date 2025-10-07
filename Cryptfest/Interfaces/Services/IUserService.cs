@@ -1,10 +1,10 @@
-﻿using API.Data.Entities.UserEntities;
+﻿using Cryptfest.Data.Entities.AuthEntities;
 using Cryptfest.Model.Dtos;
 
 namespace Cryptfest.Interfaces.Services;
 
 public interface IUserService
 {
-    Task<ToClientDto> LoginAsync(UserLogInfo logUser);
-    Task<ToClientDto> RegisterAsync(UserLogInfo registerUser);
+    Task<ToClientDto> LoginAsync(LoginRequest loginRequest);
+    Task<ToClientDto> RegisterAsync(RegisterRequest registerRequest);
 }

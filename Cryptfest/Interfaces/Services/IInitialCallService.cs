@@ -3,5 +3,4 @@
 public interface IInitialCallService
 {
     Task<bool> SaveAssetsInDbFromApi();
-    Task InitialApiAccess();
 }

@@ -1,11 +1,10 @@
 ﻿using API.Data;
 using API.Data.Entities.Wallet;
-using Cryptfest.Data.Entities.Api;
+using API.Data.Entities.WalletEntities;
+using Cryptfest.Interfaces.Repositories;
 using Cryptfest.Interfaces.Services;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Concurrent;
-using System.Net.Http;
 using System.Text.Json;
 
 namespace Cryptfest.ServiceImplementation;
@@ -15,12 +14,15 @@ public class InitialCallService : IInitialCallService
 
     private readonly ApplicationContext _context;
     private readonly IHttpClientFactory _httpClient;
-    //private readonly ApiAccess _api;
-    public InitialCallService(ApplicationContext context, IHttpClientFactory httpClient)
+    private readonly ICryptoAssetRepository _cryptoAssetRepository;
+    private readonly IApiService _api;
+
+    public InitialCallService(ApplicationContext context, IHttpClientFactory httpClient, ICryptoAssetRepository cryptoAssetRepository, IApiService api)
     {
         _context = context;
         _httpClient = httpClient;
-        //_api = _context.ApiAccess.ToList().First(); 
+        _cryptoAssetRepository = cryptoAssetRepository;
+        _api = api;
     }
 
     private async Task<string> GetAssetLogo(string symbol)
@@ -49,26 +51,31 @@ public class InitialCallService : IInitialCallService
 
     public async Task<bool> SaveAssetsInDbFromApi()
     {
-        string url = "https://pro-api.coinmarketcap.com/v1/cryptocurrency/map?sort=cmc_rank&limit=30";
-
         var client = _httpClient.CreateClient();
-        //client.DefaultRequestHeaders.Add($"{_api.Key}", $"{_api.Token}");
-        client.DefaultRequestHeaders.Add("X-CMC_PRO_API_KEY", "fb2a0246-a49a-4299-929a-75de33fb37ec");
+
+        var keyAndToken = _api.GetApiKeyToken();
+
+        string top30 = _api.GetTop30Asset();
+        string latestDataUrl = _api.GetLatestData();
+
+        client.DefaultRequestHeaders.Add($"{keyAndToken.Key}", $"{keyAndToken.Token}");
 
         try
         {
 
-            string json = await client.GetStringAsync(url);
+            string json = await client.GetStringAsync(top30);
 
             JsonDocument doc = JsonDocument.Parse(json);
             JsonElement root = doc.RootElement;
 
+            // json where all info about assets
             JsonElement items = root.GetProperty("data");
+            
             string symbol = "";
             string name = "";
             string logo = "";
 
-            List<CryptoAsset> assetsInfo = new List<CryptoAsset>();
+            List<CryptoAsset> assets = new List<CryptoAsset>();
 
             foreach (var item in items.EnumerateArray())
             {
@@ -76,7 +83,7 @@ public class InitialCallService : IInitialCallService
                 name = item.GetProperty("name").GetString() ?? "";
 
 
-                assetsInfo.Add(new CryptoAsset
+                assets.Add(new CryptoAsset
                 {
                     Name = name,
                     Symbol = symbol,
@@ -94,7 +101,7 @@ public class InitialCallService : IInitialCallService
                 MaxDegreeOfParallelism = 5,
             };
 
-            await Parallel.ForEachAsync(assetsInfo, options, async (symbolName, token) =>
+            await Parallel.ForEachAsync(assets, options, async (symbolName, token) =>
             {
                 logo = await GetAssetLogo(symbolName.Symbol);
                 if (!string.IsNullOrEmpty(logo))
@@ -104,29 +111,72 @@ public class InitialCallService : IInitialCallService
                 
             });
 
-            foreach (var item in assetsInfo)
+            foreach (var item in assets)
             {
                 if (logos.TryGetValue(item.Symbol, out logo))
                 {
                     item.Logo = logo;
                 }
             }
-            await _context.CryptoAssetInfo.AddRangeAsync(assetsInfo);
+
+            // Because will be error 429(too many requests)
+            await Task.Delay(60_000);
+
+
+            // here taking info about price
+
+            var listingsJson = await client.GetStringAsync(latestDataUrl);
+            var listingsDoc = JsonDocument.Parse(listingsJson);
+            var listingsData = listingsDoc.RootElement.GetProperty("data");
+
+            foreach (var item in listingsData.EnumerateArray())
+            {
+                symbol = item.GetProperty("symbol").GetString()!;
+                var asset = assets.FirstOrDefault(x => x.Symbol == symbol);
+                if (asset is not null)
+                {
+                    var usd = item.GetProperty("quote").GetProperty("USD");
+                    usd.GetProperty("price").TryGetDecimal(out var price);
+                    usd.GetProperty("percent_change_1h").TryGetDecimal(out var percent1h);
+                    usd.GetProperty("percent_change_24h").TryGetDecimal(out var percent24h);
+                    usd.GetProperty("percent_change_7d").TryGetDecimal(out var percent7d);
+                    usd.GetProperty("percent_change_30d").TryGetDecimal(out var percent30d);
+                    usd.GetProperty("percent_change_60d").TryGetDecimal(out var percent60d);
+
+
+                    asset.MarketData = new CryptoAssetMarketData
+                    {
+                        CurrPrice = price,
+                        PercentChange1h = percent1h,
+                        PercentChange24h = percent24h,
+                        PercentChange7d = percent7d,
+                        PercentChange30d = percent7d,
+                        PercentChange60d = percent7d
+                    };
+                }
+            }
+
+            foreach (var asset in assets)
+            {
+                var existing = await _context.CryptoAsset.FirstOrDefaultAsync(x => x.Symbol == asset.Symbol);
+                if (existing == null)
+                {
+                    await _context.CryptoAsset.AddAsync(asset);
+                }
+                else
+                {
+                    existing.Name = asset.Name;
+                    existing.Logo = asset.Logo;
+                    existing.MarketData = asset.MarketData;
+                    _context.CryptoAsset.Update(existing);
+                }
+            }
+
             await _context.SaveChangesAsync();
             return true;
         }
+
         catch (Exception ex) { throw; }
 
-    }
-
-    public async Task InitialApiAccess()
-    {
-        ApiAccess apiAccess = new ApiAccess()
-        {
-            Key = "X-CMC_PRO_API_KEY",
-            Token = "fb2a0246-a49a-4299-929a-75de33fb37ec"
-        };
-        await _context.AddAsync(apiAccess);  
-        await _context.SaveChangesAsync();  
     }
 }

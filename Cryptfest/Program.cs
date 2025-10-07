@@ -1,17 +1,22 @@
 using API.Data;
+using API.Data.Entities.UserEntities;
+using API.Data.Entities.Wallet;
 using API.Data.Entities.WalletEntities;
+using Cryptfest.Data.Entities.WalletEntities;
 using Cryptfest.Interfaces.Repositories;
-using Cryptfest.Repositories;
+using Cryptfest.Interfaces.Services;
 using Cryptfest.Interfaces.Validation;
+using Cryptfest.Repositories;
 using Cryptfest.Repositories;
 using Cryptfest.ServiceImpementation;
 using Cryptfest.ServiceImplementation;
 using Cryptfest.Validation;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using API.Data.Entities.UserEntities;
-using API.Data.Entities.Wallet;
-using Cryptfest.Data.Entities.WalletEntities;
-using Cryptfest.Interfaces.Services;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using Microsoft.Extensions.Options;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -31,19 +36,66 @@ builder.Services.AddScoped<ICryptoService, CryptoService>();
 builder.Services.AddScoped<IInitialCallService, InitialCallService>();
 builder.Services.AddScoped<ICryptoAssetRepository, CryptoAssetRepository>();
 builder.Services.AddScoped<IApiService, ApiService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 
-builder.Services.AddControllers()
-    .AddJsonOptions(option =>
+var key = Encoding.ASCII.GetBytes(builder.Configuration["JwtSettings:Secret"]!);
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(options =>
+{
+    options.RequireHttpsMetadata = false;
+    options.SaveToken = true;
+    options.TokenValidationParameters = new TokenValidationParameters
     {
-        option.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
-    });
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(key),
+
+        ValidateIssuer = true,
+        ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
+
+        ValidateAudience = true,
+        ValidAudience = builder.Configuration["JwtSettings:Audience"],
+
+        ValidateLifetime = true,
+        ClockSkew = TimeSpan.Zero
+    };
+});
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend",
+        policy =>
+        {
+            policy.WithOrigins("http://127.0.0.1:5500")
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        });
+});
+
+builder.Configuration.AddJsonFile(
+    path:"appsettings.apilinks.json",
+    optional: false,
+    reloadOnChange: true);
+
+builder.Configuration.AddJsonFile(
+    path: "appsettings.apitokens.json",
+    optional: false,
+    reloadOnChange: true);
+
+
+builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddHttpClient();
 
 var app = builder.Build();
+
+//додати перед авторизацією перед запитами!!!
+app.UseCors("AllowFrontend");
 
 using (var scope = app.Services.CreateScope())
 {
@@ -53,89 +105,12 @@ using (var scope = app.Services.CreateScope())
     await context.Database.EnsureCreatedAsync();
 
     // Take crypto assets from api and save in db
-    if ( !(context.CryptoAssetInfo.Any() && context.ApiAccess.Any()) )
+    if ( !(context.CryptoAsset.Any()) )
     {
         var initialCall = scope.ServiceProvider.GetRequiredService<IInitialCallService>();
-        bool init = await initialCall.SaveAssetsInDbFromApi();                                         // ============> this may be an error
+
+        bool init = await initialCall.SaveAssetsInDbFromApi();    // comment                                 
         if (init is false) { throw new InvalidOperationException(); }
-        await initialCall.InitialApiAccess();
-    }
-
-    //Save id db info for api (key - token)
-
-    if (!context.Wallets.Any())
-    {
-
-        Wallet wallet = new()
-        {
-            User = new User()
-            {
-                CreatedDate = new DateTime(2021, 12, 4, 10, 12, 44),
-                UserLogInfo = new UserLogInfo()
-                {
-                    Login = "Vasya123",
-                    HashPassword = "1234"
-                },
-                UserPersonalInfo = new UserPersonalInfo()
-                {
-                    Name = "Vasyl",
-                    Surname = "Pupkin",
-                    BirthDate = new DateTime(2004, 4, 16),
-                },
-            },
-            Balances = new List<CryptoBalance>()
-            {
-                new CryptoBalance()
-                {
-                    Amount = 1.5m,
-                    PurchasePrice = 100_000,
-                    Asset = new()
-                    {
-                        Logo = "logo",
-                        Name = "Bitcoin",
-                        Symbol = "BTC",
-                        MarketData = new()
-                        {
-                            CurrPrice = 110_000.123m,
-                            PercentChange1h = 2.1m,
-                            PercentChange24h = 2.1m,
-                            PercentChange7d = 2.1m,
-                            PercentChange30d = 2.1m,
-                            PercentChange60d = 2.1m
-                        }
-                    },
-                },
-                 new CryptoBalance()
-                {
-                    Amount = 1m,
-                    PurchasePrice = 4000m,
-                    Asset = new()
-                    {
-                        Logo = "logo",
-                        Name = "Ethereum",
-                        Symbol = "ETH",
-                        MarketData = new()
-                        {
-                            CurrPrice = 4012.123m,
-                            PercentChange1h = 2.1m,
-                            PercentChange24h = 2.1m,
-                            PercentChange7d = 2.1m,
-                            PercentChange30d = 2.1m,
-                            PercentChange60d = 2.1m
-                        }
-                    },
-                },
-            },
-            Statistic = new WalletStatistic()
-            {
-                TotalDeposit = 154_000m,
-                TotalAssets = 0,
-                Apy = 0,
-                
-            }
-        };
-        context.Add(wallet);
-        context.SaveChanges();
     }
 }
 
@@ -153,6 +128,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

@@ -12,6 +12,9 @@ public class CryptoBalance
     public decimal Amount { get; set; }
 
     [Column(TypeName = "decimal(18, 8)")]
+    public decimal Usdt { get; set; }
+
+    [Column(TypeName = "decimal(18, 8)")]
     public decimal PurchasePrice { get; set; }
 
     public int WalletId { get; set; }

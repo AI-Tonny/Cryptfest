@@ -39,7 +39,7 @@ public class ApiService : IApiService
         }
         catch { throw; }
     }
-    public string GetTop30Asset()
+    public string GetTop30AssetUrl()
     {
         try
         {
@@ -49,7 +49,7 @@ public class ApiService : IApiService
         catch { throw; }
     }
 
-    public string GetLatestData()
+    public string GetLatestDataUrl()
     {
         try
         {
@@ -68,7 +68,7 @@ public class ApiService : IApiService
 
         var keyAndToken = GetApiKeyToken();
         client.DefaultRequestHeaders.Add($"{keyAndToken.Key}", $"{keyAndToken.Token}");
-        string latestDataUrl = GetLatestData();
+        string latestDataUrl = GetLatestDataUrl();
 
         try
         {

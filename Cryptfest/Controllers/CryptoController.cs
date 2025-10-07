@@ -12,7 +12,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace Cryptfest.Controllers;
 
-[Authorize]
+//[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class CryptoController : ControllerBase
@@ -59,6 +59,27 @@ public class CryptoController : ControllerBase
     public async Task<IActionResult> Exchange(int walletId, string fromAssetSymbol, string toAssetSymbol, decimal amount)
     {
         ToClientDto output = await _cryptoService.EnsureExchangeAsync(walletId, fromAssetSymbol, toAssetSymbol, amount);
+        return Ok(output);
+    }
+
+    [HttpGet("wallet-balances")]
+    public async Task<IActionResult> GetBalances(int walletId)
+    {
+        ToClientDto output = await _cryptoService.GetWalletBalancesAsync(walletId);
+        return Ok(output);
+    }
+
+    [HttpGet("wallet-statistic")]
+    public async Task<IActionResult> GetStatistic(int walletId)
+    {
+        ToClientDto output = await _cryptoService.GetWalletStatisticAsync(walletId);
+        return Ok(output);
+    }
+
+    [HttpGet("wallet-transactions")]
+    public async Task<IActionResult> GetTransactions(int walletId)
+    {
+        ToClientDto output = await _cryptoService.GetWalletTransaction(walletId);
         return Ok(output);
     }
 }

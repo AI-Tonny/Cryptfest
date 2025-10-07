@@ -15,5 +15,8 @@ public class SharedAutoMapperProfiles : Profile
         CreateMap<WalletStatistic, WalletStatisticDto>().ReverseMap();
         CreateMap<CryptoAsset, CryptoAssetDto>().ReverseMap();
         CreateMap<CryptoAssetMarketData, CryptoAssetMarketDataDto>().ReverseMap();
+        CreateMap<CryptoTransaction, CryptoTransactionDto>()
+            .ForMember(dest => dest.FromAsset, opt => opt.MapFrom(src => src.FromAsset != null ? src.FromAsset.Symbol : null))
+            .ForMember(dest => dest.ToAsset, opt => opt.MapFrom(src => src.ToAsset != null ? src.ToAsset.Symbol : null));
     }
 }

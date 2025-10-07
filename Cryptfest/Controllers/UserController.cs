@@ -1,10 +1,12 @@
 ﻿using API.Data.Entities.UserEntities;
-using Cryptfest.Interfaces.Services;
 using Cryptfest.Data.Entities.AuthEntities;
+using Cryptfest.Interfaces.Services;
 using Cryptfest.Interfaces.Services;
 using Cryptfest.Model;
 using Cryptfest.Model.Dtos;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace Cryptfest.Controllers;
 
@@ -37,5 +39,33 @@ public class UserController : ControllerBase
     public async Task<IActionResult> sendVerificationCode([FromBody] VerificationRequest verificationRequest)
     {
         return Ok(await _emailService.SendVerificationEmail(verificationRequest));
+    }
+
+    [Authorize]
+    [HttpPost("change-password")]
+    public async Task<IActionResult> changePassword([FromBody] PasswordRequest passwordRequest)
+    {
+        var userPrincipal = HttpContext.User;
+
+        var userIdClaim = userPrincipal.Claims
+                                   .FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+
+        var userId = int.Parse(userIdClaim!.Value);
+
+        return Ok(await _userService.ChangePassword(passwordRequest, userId));
+    }
+
+    [Authorize]
+    [HttpPost("change-login")]
+    public async Task<IActionResult> changeLogin([FromBody] PasswordRequest passwordRequest)
+    {
+        var userPrincipal = HttpContext.User;
+
+        var userIdClaim = userPrincipal.Claims
+                                   .FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+
+        var userId = int.Parse(userIdClaim!.Value);
+
+        return Ok(await _userService.ChangePassword(passwordRequest, userId));
     }
 }

@@ -121,17 +121,16 @@ public class CryptoService : ICryptoService
        return output;
     }
 
-    public async Task<bool> CreateWallet(User user)
+    public async Task<Wallet> CreateWallet(User user)
     {
         Wallet wallet = new()
         {
             User = user
         };
-        
         await _cryptoAssetRepository.AddWalletAsync(wallet);
-        bool isSaved = await _cryptoAssetRepository.SaveChangesAsync();
+        await _cryptoAssetRepository.SaveChangesAsync();
 
-        return isSaved;
+        return wallet;
     }
 
     public async Task<ToClientDto> EnsureDepositAsync(int walletId, decimal amount)
@@ -376,26 +375,26 @@ public class CryptoService : ICryptoService
         return output;
     }
 
-    //public async Task<ToClientDto> GetWalletTransaction(int walletId)
-    //{
-    //    Wallet? wallet = (await _cryptoAssetRepository.GetWalletByIdAsync(walletId));
-    //    if (wallet is null)
-    //    {
-    //        return new()
-    //        {
-    //            Message = "This wallet does not exist",
-    //            Status = ResponseStatus.Success,
-    //        };
-    //    }
-    //    List<CryptoTransaction> history = wallet.Transactions.ToList();
+    public async Task<ToClientDto> GetWalletTransaction(int walletId)
+    {
+        Wallet? wallet = (await _cryptoAssetRepository.GetWalletByIdAsync(walletId));
+        if (wallet is null)
+        {
+            return new()
+            {
+                Message = "This wallet does not exist",
+                Status = ResponseStatus.Success,
+            };
+        }
+        List<CryptoTransaction> history = wallet.Transactions.ToList();
 
-    //    CryptoTransactionDto historyDto = _mapper.Map<CryptoTransactionDto>(history); 
+        CryptoTransactionDto historyDto = _mapper.Map<CryptoTransactionDto>(history);
 
-    //    ToClientDto output = new()
-    //    {
-    //        Data = historyDto,
-    //        Status = ResponseStatus.Success,
-    //    };
-    //    return output;
-    //}
+        ToClientDto output = new()
+        {
+            Data = historyDto,
+            Status = ResponseStatus.Success,
+        };
+        return output;
+    }
 }

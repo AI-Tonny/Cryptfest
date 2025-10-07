@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using API.Data.Entities.WalletEntities;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace API.Data.Entities.UserEntities;
 

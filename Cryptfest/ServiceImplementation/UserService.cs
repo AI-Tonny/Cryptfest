@@ -1,5 +1,6 @@
 ﻿using API.Data;
 using API.Data.Entities.UserEntities;
+using API.Data.Entities.WalletEntities;
 using Cryptfest.Data.Entities.AuthEntities;
 using Cryptfest.Enums;
 using Cryptfest.Interfaces.Services;
@@ -58,12 +59,22 @@ public class UserService : IUserService
 
         bool isHashPasswordValid = BCrypt.Net.BCrypt.Verify(loginRequest.Password, user.UserLogInfo.HashPassword);
 
+        Wallet? wallet = _context.Wallets
+            .FirstOrDefault(wallet => wallet.UserId == user.Id);
+
+        var output = new
+        {
+            jwtToken = GenerateJwtToken(user),
+            walletId = wallet!.Id
+        };
+
+
         if (isHashPasswordValid)
         {
             return new ToClientDto()
             {
                 Status = ResponseStatus.Success,
-                Data = GenerateJwtToken(user)
+                Data = output
             };
         }
         else
@@ -116,7 +127,11 @@ public class UserService : IUserService
             CreatedDate = DateTime.Now
         };
 
-        await _cryptoService.CreateWallet(newUser);
+        await _context.Users.AddAsync(newUser);
+
+        Wallet walet = await _cryptoService.CreateWallet(newUser);
+
+        await _context.SaveChangesAsync();
 
         return new ToClientDto()
         {

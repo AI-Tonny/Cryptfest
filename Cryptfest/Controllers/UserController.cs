@@ -33,7 +33,7 @@ public class UserController : ControllerBase
         return Ok(await _userService.RegisterAsync(registerRequest));
     }
 
-    [HttpGet("send-verification-code")]
+    [HttpPost("send-verification-code")]
     public async Task<IActionResult> sendVerificationCode([FromBody] VerificationRequest verificationRequest)
     {
         return Ok(await _emailService.SendVerificationEmail(verificationRequest));

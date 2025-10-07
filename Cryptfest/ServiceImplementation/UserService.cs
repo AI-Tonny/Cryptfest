@@ -134,8 +134,7 @@ public class UserService : IUserService
 
         return new ToClientDto()
         {
-            Status = ResponseStatus.Success,
-            Data = GenerateJwtToken(newUser)
+            Status = ResponseStatus.Success
         };
     }
 
@@ -162,20 +161,6 @@ public class UserService : IUserService
         var token = tokenHandler.CreateToken(tokenDescriptor);
         return tokenHandler.WriteToken(token);
     }
-
-    //public async Task<ToClientDto> ChangeUserDataAsync(int userId, UserPersonalInfo newUserData)
-    //{
-    //    User? user = await FindUserByIdAsync(userId);
-
-    //    if (user == null)
-    //    {
-    //        return new ToClientDto()
-    //        {
-    //            Message = $"User was not found to change the data",
-    //            Status = ResponseStatus.Fail
-    //        };
-    //    }
-    //}
 
     public async Task<User?> FindUserByIdAsync(int id)
     {

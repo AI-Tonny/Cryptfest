@@ -1,4 +1,7 @@
-﻿using Cryptfest.Interfaces.Services;
+﻿using Cryptfest.Enums;
+using Cryptfest.Interfaces.Services;
+using Cryptfest.Model;
+using Cryptfest.Model.Dtos;
 using System.Net;
 using System.Net.Mail;
 
@@ -18,7 +21,7 @@ public class EmailService: IEmailService
         return new Random().Next(1000, 9999).ToString();
     }
 
-    public async Task<string> SendVerificationEmail(string recipientEmail)
+    public async Task<ToClientDto> SendVerificationEmail(VerificationRequest verificationRequest)
     {
         var smtpSettings = _configuration.GetSection("SmtpSettings");
 
@@ -57,7 +60,7 @@ public class EmailService: IEmailService
             </body>
             </html>";
 
-        var mail = new MailMessage(fromAddress, recipientEmail)
+        var mail = new MailMessage(fromAddress, verificationRequest.requestEmail)
         {
             Subject = "Account Verification Code",
             Body = htmlBody,
@@ -72,6 +75,10 @@ public class EmailService: IEmailService
             await smtpClient.SendMailAsync(mail);
         }
 
-        return code;
+        return new ToClientDto()
+        {
+            Status = ResponseStatus.Success,
+            Data = code
+        };
     }
 }

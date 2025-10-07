@@ -1,6 +1,7 @@
 ﻿using API.Data.Entities.UserEntities;
 using Cryptfest.Data.Entities.AuthEntities;
 using Cryptfest.Interfaces.Services;
+using Cryptfest.Model;
 using Cryptfest.Model.Dtos;
 using Microsoft.AspNetCore.Mvc;
 
@@ -31,9 +32,9 @@ public class UserController : ControllerBase
         return Ok(await _userService.RegisterAsync(registerRequest));
     }
 
-    [HttpPost("send-verification-code")]
-    public async Task<IActionResult> sendVerificationCode(string recipientEmail)
+    [HttpGet("send-verification-code")]
+    public async Task<IActionResult> sendVerificationCode([FromBody] VerificationRequest verificationRequest)
     {
-        return Ok(await _emailService.SendVerificationEmail(recipientEmail));
+        return Ok(await _emailService.SendVerificationEmail(verificationRequest));
     }
 }

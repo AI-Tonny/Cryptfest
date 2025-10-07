@@ -1,7 +1,10 @@
-﻿namespace Cryptfest.Interfaces.Services;
+﻿using Cryptfest.Model;
+using Cryptfest.Model.Dtos;
+
+namespace Cryptfest.Interfaces.Services;
 
 public interface IEmailService
 {
     string GenerateVerificationCode();
-    Task<string> SendVerificationEmail(string recipientEmail);
+    Task<ToClientDto> SendVerificationEmail(VerificationRequest verificationRequest);
 }

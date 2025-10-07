@@ -15,7 +15,6 @@ public class ApplicationContext : DbContext
 
     public DbSet<User> Users { get; set; }
     public DbSet<UserLogInfo> UserLogInfo { get; set; }
-    public DbSet<UserPersonalInfo> UserPersonalInfo { get; set; }
 
     public DbSet<Wallet> Wallets { get; set; }
     public DbSet<CryptoAsset> CryptoAsset { get; set; }

@@ -39,8 +39,6 @@ namespace Cryptfest.Repositories
                         .ThenInclude(x => x.MarketData)
                 .Include(x => x.User)
                     .ThenInclude(x => x.UserLogInfo)
-                .Include(x => x.User)
-                    .ThenInclude(x => x.UserPersonalInfo)
                 .Include(x => x.Statistic)
                 .FirstOrDefaultAsync(x => x.Id == id);
 

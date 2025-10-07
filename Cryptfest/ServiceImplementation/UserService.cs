@@ -31,19 +31,6 @@ public class UserService : IUserService
         _configuration = configuration;
     }
 
-    //public async Task<ToClientDto> ChangeUserDataAsync(int userId, User newUserData)
-    //{
-    //    User? user = _context.Users.FirstOrDefault(user => user.Id == userId);
-
-    //    if (user == null) {
-    //        return new ToClientDto()
-    //        {
-    //            Message = $"User was not found to change the data",
-    //            Status = ResponseStatus.Fail
-    //        };
-    //    }
-    //}
-
     public async Task<ToClientDto> LoginAsync(LoginRequest loginRequest)
     {
         ValidationResult isLoginValid = _userValidation.IsLoginValid(loginRequest.Login);
@@ -126,11 +113,39 @@ public class UserService : IUserService
         User newUser = new User()
         {
             UserLogInfo = registerUser,
-            UserPersonalInfo = new UserPersonalInfo(),
             CreatedDate = DateTime.Now
         };
 
         await _cryptoService.CreateWallet(newUser);
+
+        return new ToClientDto()
+        {
+            Status = ResponseStatus.Success
+        };
+    }
+
+    public async Task<ToClientDto> ChangePassword(PasswordRequest passwordRequest, int userId)
+    {
+        ValidationResult isPasswordValid = _userValidation.IsPasswordValid(passwordRequest.newPassword);
+
+        if (!isPasswordValid.isValid)
+        {
+            return new ToClientDto()
+            {
+                Message = isPasswordValid.Message,
+                Status = ResponseStatus.Fail
+            };
+        }
+
+        User? user = await _context.Users
+            .Include(user => user.UserLogInfoId)
+            .FirstOrDefaultAsync(user => user.Id == userId);
+
+        UserLogInfo? userLogInfo = await _context.UserLogInfo
+            .FirstOrDefaultAsync(userLogInfo => userLogInfo.Id == user!.UserLogInfoId);
+
+        _context.UserLogInfo.Update(userLogInfo!);
+        await _context.SaveChangesAsync();
 
         return new ToClientDto()
         {
@@ -148,8 +163,7 @@ public class UserService : IUserService
         {
             Subject = new ClaimsIdentity(new[]
             {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Name, user.UserPersonalInfo.Name)
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
             }),
             Issuer = _configuration["JwtSettings:Issuer"],
             Audience = _configuration["JwtSettings:Audience"],
@@ -166,7 +180,6 @@ public class UserService : IUserService
     {
         return await _context.Users
             .Include(user => user.UserLogInfo)
-            .Include(user => user.UserPersonalInfo)
             .FirstOrDefaultAsync(user => user.Id == id);
     }
 
@@ -174,7 +187,6 @@ public class UserService : IUserService
     {
         return await _context.Users
             .Include(user => user.UserLogInfo)
-            .Include(user => user.UserPersonalInfo)
             .FirstOrDefaultAsync(user => user.UserLogInfo.Login == login);
     }
 

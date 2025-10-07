@@ -134,8 +134,7 @@ public class UserService : IUserService
 
         return new ToClientDto()
         {
-            Status = ResponseStatus.Success,
-            Data = GenerateJwtToken(newUser)
+            Status = ResponseStatus.Success
         };
     }
 

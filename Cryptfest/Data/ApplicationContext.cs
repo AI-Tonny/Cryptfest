@@ -18,7 +18,7 @@ public class ApplicationContext : DbContext
 
     public DbSet<Wallet> Wallets { get; set; }
     public DbSet<CryptoAsset> CryptoAsset { get; set; }
-    public DbSet<CryptoExchange> CryptoExchanges { get; set; }
+    public DbSet<CryptoTransaction> CryptoExchanges { get; set; }
     public DbSet<CryptoBalance> CryptoBalances { get; set; }
     public DbSet<CryptoAssetMarketData> CryptoAssetMarketData { get; set; }
     private DbSet<WalletStatistic> WalletStatistics { get; set; }
@@ -34,19 +34,22 @@ public class ApplicationContext : DbContext
 
 
 
-        //    modelBuilder
-        //        .Entity<CryptoTransfer>()
-        //        .HasOne(x => x.FromWallet)
-        //        .WithMany()
-        //        .HasForeignKey(x => x.FromWalletId)
-        //        .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder
+            .Entity<CryptoTransaction>()
+            .HasOne(x => x.FromAsset)
+            .WithMany()
+            .HasForeignKey(x => x.FromAssetId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+        
 
-        //    modelBuilder
-        //        .Entity<CryptoTransfer>()
-        //        .HasOne(x => x.ToWallet)
-        //        .WithMany()
-        //        .HasForeignKey(x => x.ToWalletId)
-        //        .OnDelete(DeleteBehavior.Restrict);
-        //}
+        modelBuilder
+            .Entity<CryptoTransaction>()
+            .HasOne(x => x.ToAsset)
+            .WithMany()
+            .HasForeignKey(x => x.ToAssetId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
     }
 }
+

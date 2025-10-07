@@ -7,6 +7,6 @@ public interface IApiService
 {
     Task<ToClientDto> UpdateMarketDataInDbAsync();
     ApiAccessDto GetApiKeyToken();
-    string GetTop30Asset();
-    string GetLatestData();
+    string GetTop30AssetUrl();
+    string GetLatestDataUrl();
 }

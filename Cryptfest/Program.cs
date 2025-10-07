@@ -1,23 +1,15 @@
 using API.Data;
-using API.Data.Entities.UserEntities;
-using API.Data.Entities.Wallet;
-using API.Data.Entities.WalletEntities;
-using Cryptfest.Data.Entities.WalletEntities;
 using Cryptfest.Interfaces.Repositories;
 using Cryptfest.Interfaces.Services;
 using Cryptfest.Interfaces.Validation;
-using Cryptfest.Repositories;
 using Cryptfest.Repositories;
 using Cryptfest.ServiceImpementation;
 using Cryptfest.ServiceImplementation;
 using Cryptfest.Validation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using Microsoft.Extensions.Options;
-using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 

@@ -17,4 +17,6 @@ public class Wallet
     public User User { get; set; } = new();
 
     public List<CryptoBalance> Balances { get; set; } = new();
+    public List<CryptoTransaction> Transactions { get; set; } = new();
+
 }

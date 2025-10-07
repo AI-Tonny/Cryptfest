@@ -55,8 +55,8 @@ public class InitialCallService : IInitialCallService
 
         var keyAndToken = _api.GetApiKeyToken();
 
-        string top30 = _api.GetTop30Asset();
-        string latestDataUrl = _api.GetLatestData();
+        string top30 = _api.GetTop30AssetUrl();
+        string latestDataUrl = _api.GetLatestDataUrl();
 
         client.DefaultRequestHeaders.Add($"{keyAndToken.Key}", $"{keyAndToken.Token}");
 
@@ -98,7 +98,7 @@ public class InitialCallService : IInitialCallService
 
             ParallelOptions options = new ParallelOptions()
             {
-                MaxDegreeOfParallelism = 5,
+                MaxDegreeOfParallelism = 2,
             };
 
             await Parallel.ForEachAsync(assets, options, async (symbolName, token) =>

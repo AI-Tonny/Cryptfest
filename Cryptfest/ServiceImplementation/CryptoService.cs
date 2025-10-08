@@ -121,7 +121,7 @@ public class CryptoService : ICryptoService
        return output;
     }
 
-    public async Task<bool> CreateWallet(User user)
+    public async Task<Wallet> CreateWallet(User user)
     {
         Wallet wallet = new()
         {
@@ -129,9 +129,9 @@ public class CryptoService : ICryptoService
         };
         
         await _cryptoAssetRepository.AddWalletAsync(wallet);
-        bool isSaved = await _cryptoAssetRepository.SaveChangesAsync();
+        await _cryptoAssetRepository.SaveChangesAsync();
 
-        return isSaved;
+        return wallet;
     }
 
     public async Task<ToClientDto> EnsureDepositAsync(int walletId, decimal amount)

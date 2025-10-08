@@ -2,6 +2,7 @@
 using API.Data.Entities.Wallet;
 using Cryptfest.Data.Entities.WalletEntities;
 using System.ComponentModel.DataAnnotations.Schema;
+
 namespace API.Data.Entities.WalletEntities;
 
 public class Wallet

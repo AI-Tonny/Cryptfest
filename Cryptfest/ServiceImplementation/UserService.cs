@@ -1,5 +1,6 @@
 ﻿using API.Data;
 using API.Data.Entities.UserEntities;
+using API.Data.Entities.WalletEntities;
 using Cryptfest.Data.Entities.AuthEntities;
 using Cryptfest.Enums;
 using Cryptfest.Interfaces.Services;
@@ -130,7 +131,7 @@ public class UserService : IUserService
             CreatedDate = DateTime.Now
         };
 
-        await _cryptoService.CreateWallet(newUser);
+        Wallet wallet = await _cryptoService.CreateWallet(newUser);
 
         return new ToClientDto()
         {

@@ -76,11 +76,11 @@ public class CryptoController : ControllerBase
         return Ok(output);
     }
 
-    [HttpGet("wallet-transactions")]
-    public async Task<IActionResult> GetTransactions(int walletId)
-    {
-        ToClientDto output = await _cryptoService.GetWalletTransaction(walletId);
-        return Ok(output);
-    }
+    //[HttpGet("wallet-transactions")]
+    //public async Task<IActionResult> GetTransactions(int walletId)
+    //{
+    //    ToClientDto output = await _cryptoService.GetWalletTransaction(walletId);
+    //    return Ok(output);
+    //}
 }
 

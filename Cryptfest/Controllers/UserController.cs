@@ -42,8 +42,8 @@ public class UserController : ControllerBase
     }
 
     [Authorize]
-    [HttpPost("change-password")]
-    public async Task<IActionResult> changePassword([FromBody] PasswordRequest passwordRequest)
+    [HttpPut("change-password")]
+    public async Task<IActionResult> changePassword([FromBody] NewPasswordRequest passwordRequest)
     {
         var userPrincipal = HttpContext.User;
 
@@ -56,8 +56,8 @@ public class UserController : ControllerBase
     }
 
     [Authorize]
-    [HttpPost("change-login")]
-    public async Task<IActionResult> changeLogin([FromBody] PasswordRequest passwordRequest)
+    [HttpPut("change-login")]
+    public async Task<IActionResult> changeLogin([FromBody] NewLoginRequest newLoginRequest)
     {
         var userPrincipal = HttpContext.User;
 
@@ -66,6 +66,6 @@ public class UserController : ControllerBase
 
         var userId = int.Parse(userIdClaim!.Value);
 
-        return Ok(await _userService.ChangePassword(passwordRequest, userId));
+        return Ok(await _userService.ChangeLogin(newLoginRequest, userId));
     }
 }

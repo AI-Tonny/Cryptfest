@@ -40,8 +40,6 @@ public class CryptoAssetRepository : ICryptoAssetRepository
                     .ThenInclude(x => x.MarketData)
             .Include(x => x.User)
                 .ThenInclude(x => x.UserLogInfo)
-            .Include(x => x.User)
-                .ThenInclude(x => x.UserPersonalInfo)
             .Include(x => x.Statistic)
             .Include(x => x.Transactions)
                 .ThenInclude(x => x.FromAsset)

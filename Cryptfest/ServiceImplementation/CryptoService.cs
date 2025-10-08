@@ -127,7 +127,6 @@ public class CryptoService : ICryptoService
         {
             User = user
         };
-        
         await _cryptoAssetRepository.AddWalletAsync(wallet);
         await _cryptoAssetRepository.SaveChangesAsync();
 
@@ -376,26 +375,26 @@ public class CryptoService : ICryptoService
         return output;
     }
 
-    //public async Task<ToClientDto> GetWalletTransaction(int walletId)
-    //{
-    //    Wallet? wallet = (await _cryptoAssetRepository.GetWalletByIdAsync(walletId));
-    //    if (wallet is null)
-    //    {
-    //        return new()
-    //        {
-    //            Message = "This wallet does not exist",
-    //            Status = ResponseStatus.Success,
-    //        };
-    //    }
-    //    List<CryptoTransaction> history = wallet.Transactions.ToList();
+    public async Task<ToClientDto> GetWalletTransaction(int walletId)
+    {
+        Wallet? wallet = (await _cryptoAssetRepository.GetWalletByIdAsync(walletId));
+        if (wallet is null)
+        {
+            return new()
+            {
+                Message = "This wallet does not exist",
+                Status = ResponseStatus.Success,
+            };
+        }
+        List<CryptoTransaction> history = wallet.Transactions.ToList();
 
-    //    CryptoTransactionDto historyDto = _mapper.Map<CryptoTransactionDto>(history); 
+        CryptoTransactionDto historyDto = _mapper.Map<CryptoTransactionDto>(history);
 
-    //    ToClientDto output = new()
-    //    {
-    //        Data = historyDto,
-    //        Status = ResponseStatus.Success,
-    //    };
-    //    return output;
-    //}
+        ToClientDto output = new()
+        {
+            Data = historyDto,
+            Status = ResponseStatus.Success,
+        };
+        return output;
+    }
 }

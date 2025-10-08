@@ -7,7 +7,7 @@ namespace API.Data.Entities.WalletEntities;
 
 public class Wallet
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; } = Guid.NewGuid();  
 
     public int StatisticId { get; set; }
     [ForeignKey(nameof(StatisticId))]

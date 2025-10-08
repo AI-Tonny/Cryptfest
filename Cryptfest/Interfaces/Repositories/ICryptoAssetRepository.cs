@@ -9,7 +9,7 @@ public interface ICryptoAssetRepository
 {
     Task<List<CryptoAsset>> GetCryptoAssetsAsync();
     Task<CryptoAsset?> GetCryptoAssetBySymbolAsync(string symbol);
-    Task<Wallet?> GetWalletByIdAsync(int id);
+    Task<Wallet?> GetWalletByIdAsync(Guid id);
     Task<bool> SaveChangesAsync();
     public void Update(object entity);
     Task AddWalletAsync(Wallet wallet);

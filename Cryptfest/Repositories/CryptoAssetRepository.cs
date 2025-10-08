@@ -32,7 +32,7 @@ public class CryptoAssetRepository : ICryptoAssetRepository
         return output;
     }
 
-    public async Task<Wallet?> GetWalletByIdAsync(int id)
+    public async Task<Wallet?> GetWalletByIdAsync(Guid id)
     {
         Wallet? output = await _context.Wallets
             .Include(x => x.Balances)!

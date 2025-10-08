@@ -8,7 +8,7 @@ namespace Cryptfest.Model.Dtos;
 public class WalletDto
 {
     [JsonPropertyName("walletId")]
-    public int Id { get; set; }
+    public Guid Id { get; set; }
 
     public WalletStatisticDto Statistic { get; set; } = new();
     //public User User { get; set; } = new();

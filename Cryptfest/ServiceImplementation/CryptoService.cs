@@ -79,7 +79,7 @@ public class CryptoService : ICryptoService
         }
     }
 
-    public async Task<ToClientDto> GetWalletAsync(int walletId)
+    public async Task<ToClientDto> GetWalletAsync(Guid walletId)
     {
 
         List<CryptoAssetDto> currentPrices = (List<CryptoAssetDto>)(await _api.UpdateMarketDataInDbAsync()).Data!;
@@ -133,7 +133,7 @@ public class CryptoService : ICryptoService
         return wallet;
     }
 
-    public async Task<ToClientDto> EnsureDepositAsync(int walletId, decimal amount)
+    public async Task<ToClientDto> EnsureDepositAsync(Guid walletId, decimal amount)
     {
         await _api.UpdateMarketDataInDbAsync();
 
@@ -219,7 +219,7 @@ public class CryptoService : ICryptoService
         }
     }
 
-    public async Task<ToClientDto> EnsureExchangeAsync(int walletId, string fromAssetSymbol, string toAssetSymbol, decimal amount)
+    public async Task<ToClientDto> EnsureExchangeAsync(Guid walletId, string fromAssetSymbol, string toAssetSymbol, decimal amount)
     {
         await _api.UpdateMarketDataInDbAsync();
         Wallet? wallet = await _cryptoAssetRepository.GetWalletByIdAsync(walletId);
@@ -302,7 +302,7 @@ public class CryptoService : ICryptoService
             FromAsset = fromAsset.Asset,
             ToAsset = toAsset,
             Date = DateTime.UtcNow,
-            TransactionType = TransactionType.Deposit
+            TransactionType = TransactionType.Exchange,
         });
 
         if (fromAsset.Amount == 0 || fromAsset.Amount < 0.00001m)
@@ -321,7 +321,7 @@ public class CryptoService : ICryptoService
         };
     }
 
-    public async Task<ToClientDto> GetWalletBalancesAsync(int walletId) 
+    public async Task<ToClientDto> GetWalletBalancesAsync(Guid walletId) 
     {
         Wallet? wallet = (await _cryptoAssetRepository.GetWalletByIdAsync(walletId));
         if(wallet is null)
@@ -346,7 +346,7 @@ public class CryptoService : ICryptoService
         return output;
     }
 
-    public async Task<ToClientDto> GetWalletStatisticAsync(int walletId)
+    public async Task<ToClientDto> GetWalletStatisticAsync(Guid walletId)
     {
         Wallet? wallet = (await _cryptoAssetRepository.GetWalletByIdAsync(walletId));
         if (wallet is null)
@@ -375,7 +375,7 @@ public class CryptoService : ICryptoService
         return output;
     }
 
-    public async Task<ToClientDto> GetWalletTransaction(int walletId)
+    public async Task<ToClientDto> GetWalletTransaction(Guid walletId)
     {
         Wallet? wallet = (await _cryptoAssetRepository.GetWalletByIdAsync(walletId));
         if (wallet is null)
@@ -388,7 +388,7 @@ public class CryptoService : ICryptoService
         }
         List<CryptoTransaction> history = wallet.Transactions.ToList();
 
-        CryptoTransactionDto historyDto = _mapper.Map<CryptoTransactionDto>(history);
+        List<CryptoTransactionDto> historyDto = _mapper.Map<List<CryptoTransactionDto>>(history);
 
         ToClientDto output = new()
         {

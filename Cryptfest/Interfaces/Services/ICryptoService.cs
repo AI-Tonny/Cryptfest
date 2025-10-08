@@ -9,11 +9,11 @@ public interface ICryptoService
 {
     Task<ToClientDto> GetAssetsAsync();
     Task<ToClientDto> GetAssetBySymbolAsync(string symbol);
-    Task<ToClientDto> GetWalletAsync(int walletId);
+    Task<ToClientDto> GetWalletAsync(Guid walletId);
     Task<Wallet> CreateWallet(User user);
-    Task<ToClientDto> EnsureDepositAsync(int walletId, decimal amount);
-    Task<ToClientDto> EnsureExchangeAsync(int walletId, string fromAssetSymbol, string toAssetSymbol, decimal amount);
-    Task<ToClientDto> GetWalletBalancesAsync(int walletId);
-    Task<ToClientDto> GetWalletStatisticAsync(int walletId);
-    //Task<ToClientDto> GetWalletTransaction(int walletId);
+    Task<ToClientDto> EnsureDepositAsync(Guid walletId, decimal amount);
+    Task<ToClientDto> EnsureExchangeAsync(Guid walletId, string fromAssetSymbol, string toAssetSymbol, decimal amount);
+    Task<ToClientDto> GetWalletBalancesAsync(Guid walletId);
+    Task<ToClientDto> GetWalletStatisticAsync(Guid walletId);
+    Task<ToClientDto> GetWalletTransaction(Guid walletId);
 }

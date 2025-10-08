@@ -17,7 +17,7 @@ public class CryptoBalance
     [Column(TypeName = "decimal(18, 8)")]
     public decimal PurchasePrice { get; set; }
 
-    public int WalletId { get; set; }
+    public Guid WalletId { get; set; }
     [ForeignKey(nameof(WalletId))]
     public Wallet Wallet { get; set; } = default!;
 

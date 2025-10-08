@@ -63,6 +63,7 @@ public class InitialCallService : IInitialCallService
         try
         {
 
+            
             string json = await client.GetStringAsync(top30);
 
             JsonDocument doc = JsonDocument.Parse(json);

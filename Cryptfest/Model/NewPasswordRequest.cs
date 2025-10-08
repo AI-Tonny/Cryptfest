@@ -1,6 +1,6 @@
 ﻿namespace Cryptfest.Model;
 
-public class PasswordRequest
+public class NewPasswordRequest
 {
     public string newPassword { get; set; } = "";
 }

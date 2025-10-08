@@ -8,5 +8,6 @@ public interface IUserService
 {
     Task<ToClientDto> LoginAsync(LoginRequest loginRequest);
     Task<ToClientDto> RegisterAsync(RegisterRequest registerRequest);
-    Task<ToClientDto> ChangePassword(PasswordRequest passwordRequest, int userId);
+    Task<ToClientDto> ChangePassword(NewPasswordRequest newPasswordRequest, int userId);
+    Task<ToClientDto> ChangeLogin(NewLoginRequest newLoginRequest, int userId);
 }

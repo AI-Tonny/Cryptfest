@@ -139,9 +139,9 @@ public class UserService : IUserService
         };
     }
 
-    public async Task<ToClientDto> ChangePassword(PasswordRequest passwordRequest, int userId)
+    public async Task<ToClientDto> ChangePassword(NewPasswordRequest newPasswordRequest, int userId)
     {
-        ValidationResult isPasswordValid = _userValidation.IsPasswordValid(passwordRequest.newPassword);
+        ValidationResult isPasswordValid = _userValidation.IsPasswordValid(newPasswordRequest.newPassword);
 
         if (!isPasswordValid.isValid)
         {
@@ -153,11 +153,44 @@ public class UserService : IUserService
         }
 
         User? user = await _context.Users
-            .Include(user => user.UserLogInfoId)
+            .Include(user => user.UserLogInfo)
             .FirstOrDefaultAsync(user => user.Id == userId);
 
         UserLogInfo? userLogInfo = await _context.UserLogInfo
             .FirstOrDefaultAsync(userLogInfo => userLogInfo.Id == user!.UserLogInfoId);
+
+        userLogInfo!.HashPassword = BCrypt.Net.BCrypt.HashPassword(newPasswordRequest.newPassword);
+
+        _context.UserLogInfo.Update(userLogInfo!);
+        await _context.SaveChangesAsync();
+
+        return new ToClientDto()
+        {
+            Status = ResponseStatus.Success
+        };
+    }
+
+    public async Task<ToClientDto> ChangeLogin(NewLoginRequest newLoginRequest, int userId)
+    {
+        ValidationResult isLoginValid = _userValidation.IsLoginValid(newLoginRequest.newLogin);
+
+        if (!isLoginValid.isValid)
+        {
+            return new ToClientDto()
+            {
+                Message = isLoginValid.Message,
+                Status = ResponseStatus.Fail
+            };
+        }
+
+        User? user = await _context.Users
+            .Include(user => user.UserLogInfo)
+            .FirstOrDefaultAsync(user => user.Id == userId);
+
+        UserLogInfo? userLogInfo = await _context.UserLogInfo
+            .FirstOrDefaultAsync(userLogInfo => userLogInfo.Id == user!.UserLogInfoId);
+
+        userLogInfo!.Login = newLoginRequest.newLogin;
 
         _context.UserLogInfo.Update(userLogInfo!);
         await _context.SaveChangesAsync();

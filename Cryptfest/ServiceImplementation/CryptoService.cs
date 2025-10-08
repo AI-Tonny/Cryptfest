@@ -138,7 +138,18 @@ public class CryptoService : ICryptoService
         await _api.UpdateMarketDataInDbAsync();
 
         Wallet? wallet = await _cryptoAssetRepository.GetWalletByIdAsync(walletId);
-        if (wallet is null)
+        CryptoAsset? assetUsdt = await _cryptoAssetRepository.GetCryptoAssetBySymbolAsync("usdt");
+
+        if(assetUsdt is null)
+        {
+            return new()
+            {
+                Message = "No data in database",
+                Status = ResponseStatus.Fail,
+            };
+        }
+
+        else if (wallet is null)
         {
             return new()
             {
@@ -146,7 +157,7 @@ public class CryptoService : ICryptoService
                 Status = ResponseStatus.Fail,
             };
         }
-        if(amount < 0) 
+        else if(amount < 0) 
         {
             return new()
             {
@@ -191,6 +202,7 @@ public class CryptoService : ICryptoService
         wallet.Transactions.Add(new()
         {
             Amount = amount,
+            ToAsset = assetUsdt,
             Date = DateTime.UtcNow,
             TransactionType = TransactionType.Deposit
         });

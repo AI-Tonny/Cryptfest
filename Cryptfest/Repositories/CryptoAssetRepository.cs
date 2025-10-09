@@ -38,13 +38,19 @@ public class CryptoAssetRepository : ICryptoAssetRepository
             .Include(x => x.Balances)!
                 .ThenInclude(x => x.Asset)
                     .ThenInclude(x => x.MarketData)
+
             .Include(x => x.User)
                 .ThenInclude(x => x.UserLogInfo)
+            .Include(x => x.User)
+                .ThenInclude(x => x.ClientRequest)
+
             .Include(x => x.Statistic)
+
             .Include(x => x.Transactions)
                 .ThenInclude(x => x.FromAsset)
             .Include(x => x.Transactions)
                 .ThenInclude(x => x.ToAsset)
+
             .FirstOrDefaultAsync(x => x.Id == id);
 
         return output;

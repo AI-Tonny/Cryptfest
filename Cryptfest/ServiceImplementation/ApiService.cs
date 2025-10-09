@@ -1,6 +1,7 @@
 ﻿using API.Data.Entities.Wallet;
 using API.Data.Entities.WalletEntities;
 using AutoMapper;
+using Cryptfest.Data.Entities.ClientRequest;
 using Cryptfest.Enums;
 using Cryptfest.Interfaces.Repositories;
 using Cryptfest.Interfaces.Services;
@@ -60,9 +61,31 @@ public class ApiService : IApiService
     }
 
 
-    public async Task<ToClientDto> UpdateMarketDataInDbAsync()
+    public async Task<ToClientDto> UpdateMarketDataInDbAsync(Guid walletId)
     {
         List<CryptoAsset> cryptoAssets = await _cryptoAssetRepository.GetCryptoAssetsAsync();
+
+        ClientRequest? request = (await _cryptoAssetRepository.GetWalletByIdAsync(walletId))?.User.ClientRequest;
+        if (request == null)
+        {
+            return new()
+            {
+                Message = "wallet id does not exist",
+                Status = ResponseStatus.Fail,
+            };
+        }
+
+        if ((DateTime.UtcNow - request.DateTime).TotalSeconds < 60)
+        {
+            List<CryptoAssetDto> assetsDto = _mapper.Map<List<CryptoAssetDto>>(cryptoAssets);
+
+            return new()
+            {
+                Status = ResponseStatus.Success,
+                Data = assetsDto
+            };
+        }
+
 
         HttpClient client = _httpClient.CreateClient();
 
@@ -83,7 +106,8 @@ public class ApiService : IApiService
 
             // variables for loop 
             CryptoAsset? asset = null;
-            decimal price, PercentChange1h, PercentChange24h, PercentChange7d, PercentChange30d, PercentChange60d;
+            decimal price;
+            //decimal PercentChange1h, PercentChange24h, PercentChange7d, PercentChange30d, PercentChange60d;
             JsonElement forPrice;
 
 
@@ -96,33 +120,33 @@ public class ApiService : IApiService
                 {
                     forPrice = item.GetProperty("quote").GetProperty("USD");
                     forPrice.GetProperty("price").TryGetDecimal(out price);
-                    forPrice.GetProperty("percent_change_1h").TryGetDecimal(out PercentChange1h);
-                    forPrice.GetProperty("percent_change_24h").TryGetDecimal(out PercentChange24h);
-                    forPrice.GetProperty("percent_change_7d").TryGetDecimal(out PercentChange7d);
-                    forPrice.GetProperty("percent_change_30d").TryGetDecimal(out PercentChange30d);
-                    forPrice.GetProperty("percent_change_60d").TryGetDecimal(out PercentChange60d);
+                    //forPrice.GetProperty("percent_change_1h").TryGetDecimal(out PercentChange1h);
+                    //forPrice.GetProperty("percent_change_24h").TryGetDecimal(out PercentChange24h);
+                    //forPrice.GetProperty("percent_change_7d").TryGetDecimal(out PercentChange7d);
+                    //forPrice.GetProperty("percent_change_30d").TryGetDecimal(out PercentChange30d);
+                    //forPrice.GetProperty("percent_change_60d").TryGetDecimal(out PercentChange60d);
 
 
                     // update assets info, if there are not asset, then create new instance
                     if (asset.MarketData != null)
                     {
                         asset.MarketData.CurrPrice = price;
-                        asset.MarketData.PercentChange1h = PercentChange1h;
-                        asset.MarketData.PercentChange24h = PercentChange24h;
-                        asset.MarketData.PercentChange7d = PercentChange7d;
-                        asset.MarketData.PercentChange30d = PercentChange30d;
-                        asset.MarketData.PercentChange60d = PercentChange60d;
+                        //asset.MarketData.PercentChange1h = PercentChange1h;
+                        //asset.MarketData.PercentChange24h = PercentChange24h;
+                        //asset.MarketData.PercentChange7d = PercentChange7d;
+                        //asset.MarketData.PercentChange30d = PercentChange30d;
+                        //asset.MarketData.PercentChange60d = PercentChange60d;
                     }
                     else
                     {
                         asset.MarketData = new CryptoAssetMarketData()
                         {
                             CurrPrice = price,
-                            PercentChange1h = PercentChange1h,
-                            PercentChange24h = PercentChange24h,
-                            PercentChange7d = PercentChange7d,
-                            PercentChange30d = PercentChange30d,
-                            PercentChange60d = PercentChange60d,
+                            //PercentChange1h = PercentChange1h,
+                            //PercentChange24h = PercentChange24h,
+                            //PercentChange7d = PercentChange7d,
+                            //PercentChange30d = PercentChange30d,
+                            //PercentChange60d = PercentChange60d,
                         };
                     }
 
@@ -130,7 +154,10 @@ public class ApiService : IApiService
             }
 
             List<CryptoAssetDto> cryptoAssetsResult = _mapper.Map<List<CryptoAssetDto>>(cryptoAssets);
+
+            request.DateTime = DateTime.UtcNow; 
             bool saveResult = await _cryptoAssetRepository.SaveChangesAsync();
+
 
             if (saveResult == true)
             {

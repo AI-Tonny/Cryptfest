@@ -138,21 +138,21 @@ public class InitialCallService : IInitialCallService
                 {
                     var usd = item.GetProperty("quote").GetProperty("USD");
                     usd.GetProperty("price").TryGetDecimal(out var price);
-                    usd.GetProperty("percent_change_1h").TryGetDecimal(out var percent1h);
-                    usd.GetProperty("percent_change_24h").TryGetDecimal(out var percent24h);
-                    usd.GetProperty("percent_change_7d").TryGetDecimal(out var percent7d);
-                    usd.GetProperty("percent_change_30d").TryGetDecimal(out var percent30d);
-                    usd.GetProperty("percent_change_60d").TryGetDecimal(out var percent60d);
+                    //usd.GetProperty("percent_change_1h").TryGetDecimal(out var percent1h);
+                    //usd.GetProperty("percent_change_24h").TryGetDecimal(out var percent24h);
+                    //usd.GetProperty("percent_change_7d").TryGetDecimal(out var percent7d);
+                    //usd.GetProperty("percent_change_30d").TryGetDecimal(out var percent30d);
+                    //usd.GetProperty("percent_change_60d").TryGetDecimal(out var percent60d);
 
 
                     asset.MarketData = new CryptoAssetMarketData
                     {
                         CurrPrice = price,
-                        PercentChange1h = percent1h,
-                        PercentChange24h = percent24h,
-                        PercentChange7d = percent7d,
-                        PercentChange30d = percent7d,
-                        PercentChange60d = percent7d
+                        //PercentChange1h = percent1h,
+                        //PercentChange24h = percent24h,
+                        //PercentChange7d = percent7d,
+                        //PercentChange30d = percent7d,
+                        //PercentChange60d = percent7d
                     };
                 }
             }

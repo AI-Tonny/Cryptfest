@@ -7,7 +7,7 @@ namespace Cryptfest.Interfaces.Services;
 
 public interface ICryptoService
 {
-    Task<ToClientDto> GetAssetsAsync();
+    Task<ToClientDto> GetAssetsAsync(Guid walletId);
     Task<ToClientDto> GetAssetBySymbolAsync(string symbol);
     Task<ToClientDto> GetWalletAsync(Guid walletId);
     Task<Wallet> CreateWallet(User user);

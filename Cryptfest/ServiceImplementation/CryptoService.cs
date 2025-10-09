@@ -2,6 +2,7 @@
 using API.Data.Entities.Wallet;
 using API.Data.Entities.WalletEntities;
 using AutoMapper;
+using Cryptfest.Data.Entities.ClientRequest;
 using Cryptfest.Data.Entities.WalletEntities;
 using Cryptfest.Enums;
 using Cryptfest.Interfaces.Repositories;
@@ -53,9 +54,9 @@ public class CryptoService : ICryptoService
     }
 
 
-    public async Task<ToClientDto> GetAssetsAsync()
+    public async Task<ToClientDto> GetAssetsAsync(Guid walletId)
     {
-        return await _api.UpdateMarketDataInDbAsync();
+        return await _api.UpdateMarketDataInDbAsync(walletId);
     }
 
     public async Task<ToClientDto> GetAssetBySymbolAsync(string symbol)
@@ -82,7 +83,7 @@ public class CryptoService : ICryptoService
     public async Task<ToClientDto> GetWalletAsync(Guid walletId)
     {
 
-        List<CryptoAssetDto> currentPrices = (List<CryptoAssetDto>)(await _api.UpdateMarketDataInDbAsync()).Data!;
+        List<CryptoAssetDto> currentPrices = (List<CryptoAssetDto>)(await _api.UpdateMarketDataInDbAsync(walletId)).Data!;
         Wallet? wallet = await _cryptoAssetRepository.GetWalletByIdAsync(walletId);
 
 
@@ -135,7 +136,7 @@ public class CryptoService : ICryptoService
 
     public async Task<ToClientDto> EnsureDepositAsync(Guid walletId, decimal amount)
     {
-        await _api.UpdateMarketDataInDbAsync();
+        await _api.UpdateMarketDataInDbAsync(walletId);
 
         Wallet? wallet = await _cryptoAssetRepository.GetWalletByIdAsync(walletId);
         CryptoAsset? assetUsdt = await _cryptoAssetRepository.GetCryptoAssetBySymbolAsync("usdt");
@@ -233,7 +234,7 @@ public class CryptoService : ICryptoService
 
     public async Task<ToClientDto> EnsureExchangeAsync(Guid walletId, string fromAssetSymbol, string toAssetSymbol, decimal amount)
     {
-        await _api.UpdateMarketDataInDbAsync();
+        await _api.UpdateMarketDataInDbAsync(walletId);
         Wallet? wallet = await _cryptoAssetRepository.GetWalletByIdAsync(walletId);
         if (wallet is null)
         {
@@ -370,7 +371,7 @@ public class CryptoService : ICryptoService
             };
         }
 
-        await _api.UpdateMarketDataInDbAsync();
+        await _api.UpdateMarketDataInDbAsync(walletId);
         await UpdateWalletStatisticAsync(wallet);
 
 

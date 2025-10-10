@@ -72,7 +72,26 @@ public class EmailService: IEmailService
             smtpClient.Credentials = new NetworkCredential(fromAddress, password);
             smtpClient.EnableSsl = enableSsl;
 
-            await smtpClient.SendMailAsync(mail);
+            try
+            {
+                await smtpClient.SendMailAsync(mail);
+            }
+            catch (SmtpException smtpEx)
+            {
+                return new ToClientDto()
+                {
+                    Message = smtpEx.Message,
+                    Status = ResponseStatus.Fail,
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ToClientDto()
+                {
+                    Message = ex.Message,
+                    Status = ResponseStatus.Fail,
+                };
+            }
         }
 
         return new ToClientDto()

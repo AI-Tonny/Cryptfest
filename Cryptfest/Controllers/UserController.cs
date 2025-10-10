@@ -1,9 +1,6 @@
-﻿using API.Data.Entities.UserEntities;
-using Cryptfest.Data.Entities.AuthEntities;
-using Cryptfest.Interfaces.Services;
+﻿using Cryptfest.Data.Entities.AuthEntities;
 using Cryptfest.Interfaces.Services;
 using Cryptfest.Model;
-using Cryptfest.Model.Dtos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
